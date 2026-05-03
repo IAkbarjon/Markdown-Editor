@@ -1,0 +1,103 @@
+# === Frontend (React/JS) ===
+# Logs
+frontend/logs
+frontend/*.log
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+frontend/lerna-debug.log*
+
+# Dependencies & build
+frontend/node_modules
+frontend/dist
+frontend/dist-ssr
+frontend/*.local
+
+# Editor directories and files
+frontend/.vscode/*
+frontend/!.vscode/extensions.json
+frontend/.idea
+frontend/.DS_Store
+frontend/*.suo
+frontend/*.ntvs*
+frontend/*.njsproj
+frontend/*.sln
+frontend/*.sw?
+
+# === Backend (MarkdownEditor - ASP.NET Core) ===
+# Build outputs
+MarkdownEditor/bin/
+MarkdownEditor/obj/
+MarkdownEditor/out/
+MarkdownEditor/publish/
+MarkdownEditor/Release/
+MarkdownEditor/Debug/
+
+# Compiled files
+*.exe
+*.dll
+*.so
+*.dylib
+
+# ASP.NET Core specific
+MarkdownEditor/appsettings.Development.json
+MarkdownEditor/appsettings.Production.json
+MarkdownEditor/secrets.json
+MarkdownEditor/Properties/launchSettings.json
+MarkdownEditor/Properties/serviceDependencies.local.json
+
+# User secrets
+MarkdownEditor/secrets.json
+
+# Test results
+MarkdownEditor/TestResults/
+MarkdownEditor/coverage/
+
+# Entity Framework Migrations backup
+MarkdownEditor/Migrations/*.Designer.cs
+MarkdownEditor/*.MigrationBackup/
+
+# Certificates
+*.pfx
+*.p12
+
+# Backend logs
+MarkdownEditor/logs/
+MarkdownEditor/*.log
+
+# Temp files
+MarkdownEditor/tmp/
+MarkdownEditor/temp/
+
+# IDE backend files
+.vs/
+MarkdownEditor/.vs/
+MarkdownEditor/.vscode/
+MarkdownEditor/.recipecache/
+MarkdownEditor/*.user
+
+# === Root level ===
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+*.sql
+*.backup
+*.dump
+*.pgdump
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temp
+*.tmp
+*.temp
+*.cache

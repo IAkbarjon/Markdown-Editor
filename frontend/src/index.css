@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+h1 {
+    font-size: 2.5em;
+    font-weight: 700;
+    margin: 0.67em 0;
+}
+
+h2 {
+    font-size: 1.8em;
+    font-weight: 600;
+    margin: 0.83em 0;
+}
+
+h3 {
+    font-size: 1.5em;
+    font-weight: 600;
+    margin: 1em 0;
+}
+
+h4 {
+    font-size: 1.25em;
+    font-weight: 600;
+    margin: 1.33em 0;
+}
+
+h5 {
+    font-size: 1.1em;
+    font-weight: 600;
+    margin: 1.67em 0;
+}
+
+h6 {
+    font-size: 1em;
+    font-weight: 600;
+    margin: 2.33em 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+}
+
+h1 {
+    letter-spacing: -0.03em;
+}
+
+/* Markdown-редактор */
+.markdown-body ul,
+.wmde-markdown ul {
+    list-style-type: disc !important;
+    padding-left: 2em !important;
+    margin: 1em 0 !important;
+}
+
+.markdown-body ol,
+.wmde-markdown ol {
+    list-style-type: decimal !important;
+    padding-left: 2em !important;
+    margin: 1em 0 !important;
+}
+
+.markdown-body ul ul,
+.wmde-markdown ul ul {
+    list-style-type: circle !important;
+}
+
+.markdown-body ul ul ul,
+.wmde-markdown ul ul ul {
+    list-style-type: square !important;
+}
+
+.markdown-body li,
+.wmde-markdown li {
+    margin: 0.25em 0 !important;
+}
+
+.markdown-body input[type="checkbox"],
+.wmde-markdown input[type="checkbox"] {
+    margin-right: 0.5em !important;
+}
