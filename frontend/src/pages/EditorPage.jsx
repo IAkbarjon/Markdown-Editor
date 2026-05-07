@@ -5,7 +5,7 @@ import rehypeSanitize from 'rehype-sanitize'
 import '@uiw/react-md-editor/markdown-editor.css'
 
 function EditorPage({ documentId=1, userName=`user_${Math.floor(Math.random() * 100)}` }) {
-    const { content, updateContent, sendTyping, isConnected, typingUser } = useSignalR(documentId)
+    const { content, updateContent, sendTyping, isConnected, typingUser, editorRef } = useSignalR(documentId)
     const [isTyping, setIsTyping] = useState(false)
 
     const handleChange = (newContent) => {
@@ -34,6 +34,7 @@ function EditorPage({ documentId=1, userName=`user_${Math.floor(Math.random() * 
                     rehypePlugins: [[rehypeSanitize]]
                 }}
                 height={'100%'}
+                ref={editorRef}
             />
         </div>
     )

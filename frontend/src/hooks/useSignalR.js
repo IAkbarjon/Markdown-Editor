@@ -13,6 +13,7 @@ export const useSignalR = (documentId) => {
     const [isConnected, setIsConnected] = useState(false)
     const [typingUser, setTypingUser] = useState(null)
     const connectionRef = useRef(null)
+    const editorRef = useRef(null)
 
     const notification = useNotification()
 
@@ -47,6 +48,14 @@ export const useSignalR = (documentId) => {
     // Метод для обновления контента
     const updateContent = async (newContent) => {
         if (!connectionRef.current) return
+        if (editorRef.current) {
+            const cursorPos = editorRef.current.textarea.selectionStart
+            let inputedChar = newContent[cursorPos-1]
+            if (newContent.length < content.length)
+                inputedChar = 'Backspace'
+            
+            notification.info(`Введено ${inputedChar} в позиции ${cursorPos}`, 'Позиция курсора', 1_000)
+        }
 
         setContent(newContent)
 
@@ -68,5 +77,5 @@ export const useSignalR = (documentId) => {
         }
     }
 
-    return { content, updateContent, sendTyping, isConnected, typingUser }
+    return { content, updateContent, sendTyping, isConnected, typingUser, editorRef }
 }
