@@ -85,7 +85,7 @@ function AuthPage() {
                 firstName: registerData.firstName,
                 lastName: registerData.lastName,
                 email: registerData.email,
-                password: registerData.password
+                password: registerData.password.text
             })
         }
     }

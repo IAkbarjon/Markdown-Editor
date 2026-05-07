@@ -28,8 +28,7 @@ export const useSignalR = (documentId) => {
         })
 
         connection.start()
-            .then(res => {
-                console.log(res)
+            .then(() => {
                 connectionRef.current = connection
                 setIsConnected(true)
                 connection.invoke('JoinDocument')

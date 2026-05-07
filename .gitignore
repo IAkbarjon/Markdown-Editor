@@ -44,7 +44,6 @@ MarkdownEditor/Debug/
 MarkdownEditor/appsettings.Development.json
 MarkdownEditor/appsettings.Production.json
 MarkdownEditor/secrets.json
-MarkdownEditor/Properties/launchSettings.json
 MarkdownEditor/Properties/serviceDependencies.local.json
 
 # User secrets
