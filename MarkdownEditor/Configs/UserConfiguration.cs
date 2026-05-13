@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace MarkdownEditor.config
+namespace MarkdownEditor.Configs
 {
     public class UserConfiguration : IEntityTypeConfiguration<User>
     {
@@ -11,19 +11,21 @@ namespace MarkdownEditor.config
             builder.ToTable("users");
             builder.HasKey(u => u.Id);
 
-            builder.HasAlternateKey(u => u.Email);
-
             builder.Property(u => u.FirstName)
                 .IsRequired()
-                .HasMaxLength(100);
+                .HasMaxLength(60);
 
             builder.Property(u => u.LastName)
                 .IsRequired()
-                .HasMaxLength(100);
+                .HasMaxLength(60);
 
             builder.Property(u => u.Email)
                 .IsRequired()
                 .HasMaxLength(100);
+
+            builder.Property(u => u.Username)
+                .IsRequired()
+                .HasMaxLength(40);
 
             builder.Property(u => u.Password)
                 .IsRequired()

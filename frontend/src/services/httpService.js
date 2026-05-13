@@ -43,6 +43,9 @@ const request = ({ method, path, body=undefined, secure=false }) => {
             body: JSON.stringify(body)
         })
             .then(response => {
+                if (response.status === 204) {
+                    return { success: true, data: null, status: 204 }
+                }
                 return response.json()
             })
             .then(data => {

@@ -3,9 +3,11 @@ import { useSignalR } from '../hooks/useSignalR'
 import MDEditor from '@uiw/react-md-editor'
 import rehypeSanitize from 'rehype-sanitize'
 import '@uiw/react-md-editor/markdown-editor.css'
+import { useParams, useSearchParams } from 'react-router-dom'
 
-function EditorPage({ documentId=1, userName=`user_${Math.floor(Math.random() * 100)}` }) {
-    const { content, updateContent, sendTyping, isConnected, typingUser } = useSignalR(documentId)
+function EditorPage({ userName }) {
+    
+    const { content, updateContent, sendTyping, isConnected, typingUser } = useSignalR(1)
     const [isTyping, setIsTyping] = useState(false)
 
     const handleChange = (newContent) => {

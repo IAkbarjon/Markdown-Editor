@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace MarkdownEditor.config
+namespace MarkdownEditor.Configs
 {
     public class DocumentVersionConfiguration : IEntityTypeConfiguration<DocumentVersion>
     {

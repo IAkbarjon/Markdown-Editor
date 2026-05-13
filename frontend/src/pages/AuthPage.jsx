@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Button, Container, Form } from 'react-bootstrap'
-import { Eye, EyeFill } from 'react-bootstrap-icons'
+import { Button, Card, Container, Form } from 'react-bootstrap'
+import { Eye, EyeFill, BoxArrowInRight, PersonPlus } from 'react-bootstrap-icons'
 import useNotification from '../hooks/useNotification'
 import useUser from '../hooks/useUser'
 import { useNavigate } from 'react-router-dom'
@@ -37,26 +37,24 @@ function AuthPage() {
 
     useEffect(() => {
         if (user) {
-            console.log(user)
             navigate('/', { replace: true })
         }
     }, [user])
 
-    const handleValidatePassword = (validate=true) => {
+    const handleValidatePassword = (validate = true) => {
         setRegisterData(prev => ({
-                ...prev,
-                password: {
-                    ...prev.password,
-                    isInvalid: validate
-                },
-                repeatPassword: {
-                    ...prev.repeatPassword,
-                    isInvalid: validate
-                }
-            }))
+            ...prev,
+            password: {
+                ...prev.password,
+                isInvalid: validate
+            },
+            repeatPassword: {
+                ...prev.repeatPassword,
+                isInvalid: validate
+            }
+        }))
     }
 
-    // Обработка входа
     const handleLogin = (e) => {
         e.preventDefault()
 
@@ -69,7 +67,6 @@ function AuthPage() {
         }
     }
 
-    // Обработка регистрации
     const handleRegister = (e) => {
         e.preventDefault()
 
@@ -85,206 +82,287 @@ function AuthPage() {
                 firstName: registerData.firstName,
                 lastName: registerData.lastName,
                 email: registerData.email,
-                password: registerData.password
+                password: registerData.password.text
             })
         }
     }
 
     return (
-        <Container className='flex flex-1 h-full items-center justify-center'>
-            {authMode === 'login' ?
-                <Form
-                    onSubmit={handleLogin}
-                    className='shadow-2xl min-w-120 rounded-2xl flex flex-col items-center justify-center pt-10 pb-10 gap-[16px]'
-                >
-                    <Form.Group>
-                        <h1>Вход</h1>
-                    </Form.Group>
-                    <Form.Group className='w-4/7'>
-                        <Form.Label>Почта</Form.Label>
-                        <Form.Control
-                            type='email'
-                            name='email'
-                            value={loginData.email}
-                            onChange={(e) => setLoginData(prev => ({
-                                ...prev,
-                                email: e.target.value
-                            }))}
-                            required
-                            className=''
-                        />
-                    </Form.Group>
-                    <Form.Group className='relative w-4/7'>
-                        <Form.Label>Пароль</Form.Label>
-                        <Form.Control
-                            type={loginData.password.show ? 'text' : 'password'}
-                            value={loginData.password.text}
-                            onChange={(e) => setLoginData(prev => ({
-                                ...prev,
-                                password: {
-                                    ...prev.password,
-                                    text: e.target.value
-                                }
-                            }))}
-                            required
-                        />
-                        <Button
-                            variant='none'
-                            onClick={() => setLoginData(prev => ({
-                                ...prev,
-                                password: {
-                                    ...prev.password,
-                                    show: !prev.password.show
-                                }
-                            }))}
-                            className='absolute bottom-[2px] right-0 w-min h-min'
-                            tabIndex={-1}
-                        >
-                            { loginData.password.show
-                                ? <EyeFill size={18} color='#0b5ed7' />
-                                : <Eye size={18} color='gray' />
-                            }
-                        </Button>
-                    </Form.Group>
-                    <Form.Group className='mt-3'>
-                        <Button type='submit'>Войти</Button>
-                    </Form.Group>
-                    <Form.Group className='mt-4'>
-                        <p>
-                            Нет аккунта?
-                            <Button
-                                variant='link'
-                                onClick={() => setAuthMode('signout')}
-                                className='p-[0 auto]'
-                            >Создать</Button>
-                        </p>
-                    </Form.Group>
-                </Form> : 
-                <Form
-                    onSubmit={handleRegister}
-                    className='shadow-2xl min-w-120 rounded-2xl flex flex-col items-center justify-center pt-10 pb-10 gap-[16px]'
-                >
-                    <Form.Group>
-                        <h1>Регистрация</h1>
-                    </Form.Group>
-                    <Form.Group className='w-4/7'>
-                        <Form.Label>Фамилия</Form.Label>
-                        <Form.Control
-                            type='text'
-                            value={registerData.lastName}
-                            onChange={(e) => setRegisterData(prev => ({
-                                ...prev,
-                                lastName: e.target.value
-                            }))}
-                            required
-                        />
-                    </Form.Group>
-                    <Form.Group className='w-4/7'>
-                        <Form.Label>Имя</Form.Label>
-                        <Form.Control
-                            type='text'
-                            value={registerData.firstName}
-                            onChange={(e) => setRegisterData(prev => ({
-                                ...prev,
-                                firstName: e.target.value
-                            }))}
-                            required
-                        />
-                    </Form.Group>
-                    <Form.Group  className='w-4/7'>
-                        <Form.Label>Почта</Form.Label>
-                        <Form.Control
-                            type='email'
-                            value={registerData.email}
-                            onChange={(e) => setRegisterData(prev => ({
-                                ...prev,
-                                email: e.target.value
-                            }))}
-                            required
-                        />
-                    </Form.Group>
-                    <Form.Group className='relative w-4/7'>
-                        <Form.Label>Пароль</Form.Label>
-                        <Form.Control
-                            type={registerData.password.show ? 'text' : 'password'}
-                            value={registerData.password.text}
-                            onChange={(e) => setRegisterData(prev => ({
-                                ...prev,
-                                password: {
-                                    ...prev.password,
-                                    text: e.target.value
-                                }
-                            }))}
-                            required
-                            isInvalid={registerData.password.isInvalid}
-                        />
-                        <Button
-                            variant='none'
-                            onClick={() => setRegisterData(prev => ({
-                                ...prev,
-                                password: {
-                                    ...prev.password,
-                                    show: !prev.password.show
-                                }
-                            }))}
-                            className='absolute bottom-[2px] right-0 w-min h-min'
-                            tabIndex={-1}
-                        >
-                            { registerData.password.show
-                                ? <EyeFill size={18} color='#0b5ed7' />
-                                : <Eye size={18} color='gray' />
-                            }
-                        </Button>
-                    </Form.Group>
-                    <Form.Group className='relative w-4/7'>
-                        <Form.Label>Повторный пароль</Form.Label>
-                        <Form.Control
-                            type={registerData.repeatPassword.show ? 'text' : 'password'}
-                            value={registerData.repeatPassword.text}
-                            onChange={(e) => setRegisterData(prev => ({
-                                ...prev,
-                                repeatPassword: {
-                                    ...prev.repeatPassword,
-                                    text: e.target.value
-                                }
-                            }))}
-                            required
-                            isInvalid={registerData.repeatPassword.isInvalid}
-                        />
-                        <Button
-                            variant='none'
-                            onClick={() => setRegisterData(prev => ({
-                                ...prev,
-                                repeatPassword: {
-                                    ...prev.repeatPassword,
-                                    show: !prev.repeatPassword.show
-                                }
-                            }))}
-                            className='absolute bottom-[2px] right-0 w-min h-min'
-                            tabIndex={-1}
-                        >
-                            { registerData.repeatPassword.show
-                                ? <EyeFill size={18} color='#0b5ed7' />
-                                : <Eye size={18} color='gray' />
-                            }
-                        </Button>
-                    </Form.Group>
-                    <Form.Group className='mt-3'>
-                        <Button type='submit'>Зарегистрироваться</Button>
-                    </Form.Group>
-                    <Form.Group className='mt-4'>
-                        <p>
-                            Есть аккаунт?
-                            <Button
-                                variant='link'
-                                onClick={() => setAuthMode('login')}
-                                className='p-[0 auto]'
-                            >Войти</Button>
-                        </p>
-                    </Form.Group>
-                </Form>
-            }
-        </Container>
+        <div className='min-vh-100 bg-light d-flex align-items-center justify-content-center p-3'>
+            <div style={{ maxWidth: '440px', width: '100%' }}>
+                <Card className='border-0 shadow-sm'>
+                    <Card.Body className='p-4 p-sm-5'>
+                        
+                        {authMode === 'login' ? (
+                            // Форма входа
+                            <>
+                                <div className='text-center mb-4'>
+                                    <div 
+                                        className='bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3'
+                                        style={{ width: '48px', height: '48px' }}
+                                    >
+                                        <BoxArrowInRight size={24} className='text-primary' />
+                                    </div>
+                                    <h5 className='fw-semibold mb-1'>Вход</h5>
+                                    <p className='text-muted small mb-0'>
+                                        Войдите в свой аккаунт
+                                    </p>
+                                </div>
+
+                                <Form onSubmit={handleLogin}>
+                                    <Form.Group className='mb-3'>
+                                        <Form.Label className='small fw-medium text-secondary'>
+                                            Почта
+                                        </Form.Label>
+                                        <Form.Control
+                                            type='email'
+                                            value={loginData.email}
+                                            onChange={(e) => setLoginData(prev => ({
+                                                ...prev,
+                                                email: e.target.value
+                                            }))}
+                                            placeholder='example@mail.com'
+                                            className='rounded-pill px-3 py-2'
+                                            required
+                                        />
+                                    </Form.Group>
+
+                                    <Form.Group className='mb-4 position-relative'>
+                                        <Form.Label className='small fw-medium text-secondary'>
+                                            Пароль
+                                        </Form.Label>
+                                        <Form.Control
+                                            type={loginData.password.show ? 'text' : 'password'}
+                                            value={loginData.password.text}
+                                            onChange={(e) => setLoginData(prev => ({
+                                                ...prev,
+                                                password: {
+                                                    ...prev.password,
+                                                    text: e.target.value
+                                                }
+                                            }))}
+                                            placeholder='••••••••'
+                                            className='rounded-pill px-3 py-2 pe-5'
+                                            required
+                                        />
+                                        <Button
+                                            variant='link'
+                                            onClick={() => setLoginData(prev => ({
+                                                ...prev,
+                                                password: {
+                                                    ...prev.password,
+                                                    show: !prev.password.show
+                                                }
+                                            }))}
+                                            className='position-absolute end-0 top-[31px] mt-1 me-1 p-2 text-secondary lh-1'
+                                            tabIndex={-1}
+                                        >
+                                            {loginData.password.show
+                                                ? <EyeFill size={19} />
+                                                : <Eye size={19} />
+                                            }
+                                        </Button>
+                                    </Form.Group>
+
+                                    <Button
+                                        type='submit'
+                                        variant='dark'
+                                        className='w-100 rounded-pill py-2 mb-3'
+                                    >
+                                        Войти
+                                    </Button>
+                                </Form>
+
+                                <div className='text-center'>
+                                    <span className='text-muted small me-1'>
+                                        Нет аккаунта?
+                                    </span>
+                                    <Button
+                                        variant='link'
+                                        size='sm'
+                                        className='text-decoration-none p-0'
+                                        onClick={() => setAuthMode('signout')}
+                                    >
+                                        Создать
+                                    </Button>
+                                </div>
+                            </>
+                        ) : (
+                            // Форма регистрации
+                            <>
+                                <div className='text-center mb-4'>
+                                    <div 
+                                        className='bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3'
+                                        style={{ width: '48px', height: '48px' }}
+                                    >
+                                        <PersonPlus size={24} className='text-primary' />
+                                    </div>
+                                    <h5 className='fw-semibold mb-1'>Регистрация</h5>
+                                    <p className='text-muted small mb-0'>
+                                        Создайте новый аккаунт
+                                    </p>
+                                </div>
+
+                                <Form onSubmit={handleRegister}>
+                                    <Form.Group className='mb-3'>
+                                        <Form.Label className='small fw-medium text-secondary'>
+                                            Фамилия
+                                        </Form.Label>
+                                        <Form.Control
+                                            type='text'
+                                            value={registerData.lastName}
+                                            onChange={(e) => setRegisterData(prev => ({
+                                                ...prev,
+                                                lastName: e.target.value
+                                            }))}
+                                            className='rounded-pill px-3 py-2'
+                                            placeholder='Иванов'
+                                            required
+                                        />
+                                    </Form.Group>
+
+                                    <Form.Group className='mb-3'>
+                                        <Form.Label className='small fw-medium text-secondary'>
+                                            Имя
+                                        </Form.Label>
+                                        <Form.Control
+                                            type='text'
+                                            value={registerData.firstName}
+                                            onChange={(e) => setRegisterData(prev => ({
+                                                ...prev,
+                                                firstName: e.target.value
+                                            }))}
+                                            className='rounded-pill px-3 py-2'
+                                            placeholder='Иван'
+                                            required
+                                        />
+                                    </Form.Group>
+
+                                    <Form.Group className='mb-3'>
+                                        <Form.Label className='small fw-medium text-secondary'>
+                                            Почта
+                                        </Form.Label>
+                                        <Form.Control
+                                            type='email'
+                                            value={registerData.email}
+                                            onChange={(e) => setRegisterData(prev => ({
+                                                ...prev,
+                                                email: e.target.value
+                                            }))}
+                                            placeholder='example@mail.com'
+                                            className='rounded-pill px-3 py-2'
+                                            required
+                                        />
+                                    </Form.Group>
+
+                                    <Form.Group className='mb-3 position-relative'>
+                                        <Form.Label className='small fw-medium text-secondary'>
+                                            Пароль
+                                        </Form.Label>
+                                        <Form.Control
+                                            type={registerData.password.show ? 'text' : 'password'}
+                                            value={registerData.password.text}
+                                            onChange={(e) => setRegisterData(prev => ({
+                                                ...prev,
+                                                password: {
+                                                    ...prev.password,
+                                                    text: e.target.value
+                                                }
+                                            }))}
+                                            placeholder='••••••••'
+                                            className='rounded-pill px-3 py-2 pe-5'
+                                            required
+                                            isInvalid={registerData.password.isInvalid}
+                                        />
+                                        <Button
+                                            variant='link'
+                                            onClick={() => setRegisterData(prev => ({
+                                                ...prev,
+                                                password: {
+                                                    ...prev.password,
+                                                    show: !prev.password.show
+                                                }
+                                            }))}
+                                            className='position-absolute end-0 top-[31px] mt-1 me-1 p-2 text-secondary lh-1'
+                                            tabIndex={-1}
+                                        >
+                                            {registerData.password.show
+                                                ? <EyeFill size={18} />
+                                                : <Eye size={18} />
+                                            }
+                                        </Button>
+                                    </Form.Group>
+
+                                    <Form.Group className='mb-4 position-relative'>
+                                        <Form.Label className='small fw-medium text-secondary'>
+                                            Повторный пароль
+                                        </Form.Label>
+                                        <Form.Control
+                                            type={registerData.repeatPassword.show ? 'text' : 'password'}
+                                            value={registerData.repeatPassword.text}
+                                            onChange={(e) => setRegisterData(prev => ({
+                                                ...prev,
+                                                repeatPassword: {
+                                                    ...prev.repeatPassword,
+                                                    text: e.target.value
+                                                }
+                                            }))}
+                                            placeholder='••••••••'
+                                            className='rounded-pill px-3 py-2 pe-5'
+                                            required
+                                            isInvalid={registerData.repeatPassword.isInvalid}
+                                        />
+                                        <Button
+                                            variant='link'
+                                            onClick={() => setRegisterData(prev => ({
+                                                ...prev,
+                                                repeatPassword: {
+                                                    ...prev.repeatPassword,
+                                                    show: !prev.repeatPassword.show
+                                                }
+                                            }))}
+                                            className='position-absolute end-0 top-[31px] mt-1 me-1 p-2 text-secondary lh-1'
+                                            tabIndex={-1}
+                                        >
+                                            {registerData.repeatPassword.show
+                                                ? <EyeFill size={18} />
+                                                : <Eye size={18} />
+                                            }
+                                        </Button>
+                                    </Form.Group>
+
+                                    <Button
+                                        type='submit'
+                                        variant='dark'
+                                        className='w-100 rounded-pill py-2 mb-3'
+                                    >
+                                        Зарегистрироваться
+                                    </Button>
+                                </Form>
+
+                                <div className='text-center'>
+                                    <span className='text-muted small me-1'>
+                                        Есть аккаунт?
+                                    </span>
+                                    <Button
+                                        variant='link'
+                                        size='sm'
+                                        className='text-decoration-none p-0'
+                                        onClick={() => setAuthMode('login')}
+                                    >
+                                        Войти
+                                    </Button>
+                                </div>
+                            </>
+                        )}
+                    </Card.Body>
+                </Card>
+
+                <p className='text-center text-muted small mt-3 mb-0'>
+                    Markdown Editor
+                </p>
+            </div>
+        </div>
     )
 }
 

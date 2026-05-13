@@ -2,6 +2,7 @@ import { createContext, useEffect, useState } from 'react'
 import httpService from '../services/httpService'
 import { Outlet, useNavigate } from 'react-router-dom'
 import useNotification from '../hooks/useNotification'
+import LoadingPage from '../pages/LoadingPage'
 
 const UserContext = createContext()
 
@@ -74,14 +75,14 @@ function ProtectedRoute({ requireAuthorization=false }) {
                 notification.error(err?.message || 'Не удалось обработать выход')
             })
     }
+    
+    const value = { user, setUser, checkAuth, login, register, logout }
 
     if (isLoading) {
         return (
-            <div>Загрузка...</div>
+            <LoadingPage />
         )
     }
-
-    const value = { user, checkAuth, login, register, logout }
     
     return (
         <UserContext.Provider value={value}>

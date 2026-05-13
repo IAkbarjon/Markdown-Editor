@@ -79,3 +79,13 @@ h1 {
 .wmde-markdown input[type="checkbox"] {
     margin-right: 0.5em !important;
 }
+
+.w-md-editor-preview h1,
+.w-md-editor-preview h2,
+.w-md-editor-preview h3,
+.w-md-editor-preview h4,
+.w-md-editor-preview h5,
+.w-md-editor-preview h6 {
+    text-decoration: none !important;
+    border-bottom: none !important;
+}

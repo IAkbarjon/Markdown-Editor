@@ -1,4 +1,4 @@
-﻿using MarkdownEditor.config;
+﻿using MarkdownEditor.Configs;
 using Microsoft.EntityFrameworkCore;
 
 namespace MarkdownEditor.Models

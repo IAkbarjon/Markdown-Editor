@@ -3,8 +3,11 @@ using MarkdownEditor.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
+using static System.Collections.Specialized.BitVector32;
 
 namespace MarkdownEditor.Controllers
 {
@@ -40,9 +43,13 @@ namespace MarkdownEditor.Controllers
                     return BadRequest(new ApiError("Неправильный формат токена", 400));
                 }
 
-                User existUser = await _context.Users
-                    .AsNoTracking()
-                    .FirstAsync(u => u.Id == userId);
+                User? existUser = await GetUser(u => u.Id == userId);
+
+                if (existUser == null)
+                {
+                    return BadRequest(new ApiError("Токен неправильного формата", 400));
+                }
+
                 existUser.Password = null;
 
                 return Ok(new ApiResponse<User>(existUser));
@@ -61,13 +68,18 @@ namespace MarkdownEditor.Controllers
                 return BadRequest(new ApiError("Пользователь с такой почтой уже существует", 400));
             }
 
+            newUser.Username = GenerateUsername(newUser.Email);
+
             await _context.Users.AddAsync(newUser);
             newUser.Password = PasswordService.HashPassword(newUser.Password!);
             await _context.SaveChangesAsync();
 
-            User savedUser = await _context.Users
-                .AsNoTracking()
-                .FirstAsync(u => u.Email == newUser.Email);
+            User? savedUser = await GetUser(u => u.Email == newUser.Email);
+
+            if (savedUser == null)
+            {
+                return NotFound(new ApiError("Пользователя не существует", 404));
+            }
 
             SetSession(savedUser.Id);
 
@@ -85,7 +97,12 @@ namespace MarkdownEditor.Controllers
                 return BadRequest(new ApiError("Пользователя с такой почтой не существует", 400));
             }
 
-            User existUser = await _context.Users.FirstAsync(u => u.Email == user.Email);
+            User? existUser = await GetUser(u => u.Email == user.Email);
+
+            if (existUser == null)
+            {
+                return NotFound(new ApiError("Пользователя не существует", 404));
+            }
 
             // Проверка совпадения пароля
             if (!PasswordService.VerifyPassword(user.Password!, existUser.Password!))
@@ -103,15 +120,76 @@ namespace MarkdownEditor.Controllers
         {
             if (Request.Cookies.TryGetValue("session", out var session))
             {
-                Response.Cookies.Delete("session");
+                Response.Cookies.Delete("session", _cookieOptions);
             }
 
-            return Ok();
+            return NoContent();
+        }
+
+        [HttpPatch("change-data")]
+        public async Task<IActionResult> ChangeData([FromBody] User updatedUser)
+        {
+            if (Request.Cookies.TryGetValue("session", out var session))
+            {
+                int? userId = _jwtService.GetUserIdFromToken(session);
+                if (userId == null || !_context.Users.Any(u => u.Id == userId))
+                {
+                    return BadRequest(new ApiError("Неправильный формат токена", 400));
+                }
+
+                var existingUser = await _context.Users.FindAsync(userId.Value);
+
+                if (existingUser == null)
+                {
+                    return NotFound(new ApiError("Пользвоатель не найден", 404));
+                }
+
+                if (updatedUser.FirstName != null)
+                    existingUser.FirstName = updatedUser.FirstName;
+
+                if (updatedUser.LastName != null)
+                    existingUser.LastName = updatedUser.LastName;
+
+                if (updatedUser.Username != null)
+                    existingUser.Username = updatedUser.Username;
+
+                if (updatedUser.Email != null)
+                    existingUser.Email = updatedUser.Email;
+
+                await _context.SaveChangesAsync();
+                return Ok(new ApiResponse<User>(existingUser));
+            }
+
+            return Unauthorized(new ApiError("Пользователь не авторизован", 401));
         }
 
         private void SetSession(int userId)
         {
             Response.Cookies.Append("session", _jwtService.GenerateToken(userId), _cookieOptions);
+        }
+
+        private string GenerateUsername(string email)
+        {
+            var username = email.Split("@")[0];
+
+            username = "@" + Regex.Replace(username, @"[^a-zA-Z0-9_-]", "");
+
+            return username.ToLower();
+        }
+
+        private async Task<User?> GetUser(Expression<Func<User, bool>> func)
+        {
+            User? user = await _context.Users
+                .AsNoTracking()
+                .Include(u => u.Documents)!
+                    .ThenInclude(d => d.DocumentAccesses)
+                .Include(u => u.Documents)!
+                    .ThenInclude(d => d.DocumentVersions)
+                .Include(u => u.AccessToDocuments)!
+                    .ThenInclude(a => a.Document)
+                .FirstOrDefaultAsync(func);
+
+            return user;
         }
     }
 }
