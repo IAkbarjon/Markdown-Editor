@@ -10,7 +10,7 @@ namespace MarkdownEditor.Hubs
         Task ReceiveContent(string content);
         Task UserJoined(string connectionId);
     }
-
+    
     public class MarkdownHub : Hub<IMarkdownClient>
     {
         private static readonly Dictionary<string, string> _documents = new();

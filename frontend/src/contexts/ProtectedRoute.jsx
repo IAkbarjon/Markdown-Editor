@@ -13,6 +13,11 @@ function ProtectedRoute({ requireAuthorization=false }) {
     const navigate = useNavigate()
     const notification = useNotification()
 
+    // Генерация csrf
+    const csrfGenerage = () => {
+        httpService.refreshCsrf()
+    }
+
     // Проверка авторизаций
     const checkAuth = () => {
         httpService.get('/authorization/check')
@@ -41,6 +46,7 @@ function ProtectedRoute({ requireAuthorization=false }) {
             .then(res => {
                 notification.success(`Пользователь ${res.data.firstName} совершил вход`)
                 setUser(res.data)
+                csrfGenerage()
             })
             .catch(err => {
                 notification.error(err.message || 'Ошибка запроса')
@@ -58,6 +64,7 @@ function ProtectedRoute({ requireAuthorization=false }) {
             .then(res => {
                 notification.success(`Пользователь ${res.data.firstName} зарегистрирован`)
                 setUser(res.data)
+                csrfGenerage()
             })
             .catch(err => {
                 console.error(err)
@@ -67,7 +74,7 @@ function ProtectedRoute({ requireAuthorization=false }) {
 
     // Выход
     const logout = () => {
-        httpService.delete('/authorization/logout')
+        httpService.delete('/authorization/logout', )
             .then(() => {
                 setUser(null)
             })

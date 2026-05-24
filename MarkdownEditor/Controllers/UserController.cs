@@ -33,6 +33,7 @@ namespace MarkdownEditor.Controllers
         }
 
         [HttpGet("check")]
+        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> CheckAuth()
         {
             if (Request.Cookies.TryGetValue("session", out var session))
@@ -40,7 +41,7 @@ namespace MarkdownEditor.Controllers
                 int? userId = _jwtService.GetUserIdFromToken(session);
                 if (userId == null || !_context.Users.Any(u => u.Id == userId))
                 {
-                    return BadRequest(new ApiError("Неправильный формат токена", 400));
+                    return Unauthorized(new ApiError("Пользователь не авторизован", 401));
                 }
 
                 User? existUser = await GetUser(u => u.Id == userId);
@@ -59,6 +60,7 @@ namespace MarkdownEditor.Controllers
         }
 
         [HttpPost("register")]
+        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> Register([FromBody] User newUser)
         {
             bool userExists = await _context.Users.AnyAsync(u => u.Email == newUser.Email);
@@ -87,6 +89,7 @@ namespace MarkdownEditor.Controllers
         }
 
         [HttpPost("login")]
+        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> Login([FromBody] User user)
         {
             bool userExists = await _context.Users.AnyAsync(u => u.Email == user.Email);
@@ -118,9 +121,14 @@ namespace MarkdownEditor.Controllers
         [HttpDelete("logout")]
         public async Task<IActionResult> LogOut()
         {
-            if (Request.Cookies.TryGetValue("session", out var session))
+            if (Request.Cookies.TryGetValue("session", out var _))
             {
                 Response.Cookies.Delete("session", _cookieOptions);
+            }
+
+            if (Request.Cookies.TryGetValue("XSRF-TOKEN", out var _))
+            {
+                Response.Cookies.Delete("XSRF-TOKEN", _cookieOptions);
             }
 
             return NoContent();
