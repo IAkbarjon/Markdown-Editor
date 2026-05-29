@@ -31,7 +31,11 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddSignalR();
 builder.Services.AddDbContext<ApplicationContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")!,
+    npgsqlOptions =>
+    {
+        npgsqlOptions.EnableRetryOnFailure();
+    }));
 builder.Services.AddAuthorization();
 
 // Cookie authentication
