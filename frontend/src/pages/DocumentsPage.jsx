@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Button, Card, Form, Modal } from 'react-bootstrap'
 import { FileEarmarkText, PlusCircle, PencilSquare, Trash, People, PersonPlus, XLg, Check, Clock, Person } from 'react-bootstrap-icons'
 import useNotification from '../hooks/useNotification'
@@ -8,42 +8,9 @@ import httpService from '../services/httpService'
 
 function DocumentsPage() {
     const { user, setUser } = useUser()
+    const [searchParams, setSearchParams] = useSearchParams() // mode, selected
     const navigate = useNavigate()
     const notification = useNotification()
-
-    // Моковые данные — заменить на API
-    // const [documents, setDocuments] = useState([
-    //     { 
-    //         id: 1, 
-    //         title: 'API Documentation', 
-    //         content: '# API Docs\n...', 
-    //         updatedAt: '2026-12-20T10:30:00',
-    //         sharedWith: [
-    //             { id: 1, username: 'alex_dev', email: 'alex@example.com', access: 'write' },
-    //             { id: 2, username: 'maria_qa', email: 'maria@example.com', access: 'read' }
-    //         ]
-    //     }, { 
-    //         id: 2, 
-    //         title: 'Project Roadmap', 
-    //         content: '# Roadmap\n...', 
-    //         updatedAt: '2026-12-19T16:00:00',
-    //         sharedWith: [
-    //             { id: 3, username: 'ivan_lead', email: 'ivan@example.com', access: 'write' }
-    //         ]
-    //     }, { 
-    //         id: 3, 
-    //         title: 'Meeting Notes', 
-    //         content: '# Notes\n...', 
-    //         updatedAt: '2026-12-18T09:15:00',
-    //         sharedWith: []
-    //     },
-    // ])
-
-    // Состояния модалок
-    const [showCreate, setShowCreate] = useState(false)
-    const [showEdit, setShowEdit] = useState(null)
-    const [showDelete, setShowDelete] = useState(null)
-    const [showShare, setShowShare] = useState(null)
     
     // Формы
     const [newTitle, setNewTitle] = useState('')
@@ -66,10 +33,13 @@ function DocumentsPage() {
         httpService.post('/document', newDoc)
             .then(res => {
                 setNewTitle('')
-                setShowCreate(false)
+                setSearchParams(prev => ({ ...prev, mode: 'none' }))
                 notification.success('Документ создан')
-                // Редирект в редактор
-                navigate(`/editor?id=${res.data.id}`)
+                setUser(prev => ({
+                    ...prev,
+                    documents: [...prev.documents ?? [], res.data]
+                }))
+                navigate(`/editor?document=${res.data.id}`)
             })
             .catch(err => {
                 console.error(err)
@@ -89,8 +59,7 @@ function DocumentsPage() {
         // setDocuments(prev => prev.map(doc => 
         //     doc.id === id ? { ...doc, title: editTitle.trim() } : doc
         // ))
-        
-        setShowEdit(null)
+        setSearchParams(prev => ({ ...prev, mode: 'none' }))
         setEditTitle('')
         notification.success('Название обновлено')
     }
@@ -99,7 +68,7 @@ function DocumentsPage() {
     const handleDelete = (id) => {
         // DELETE /api/documents/{id}
         // setDocuments(prev => prev.filter(doc => doc.id !== id))
-        setShowDelete(null)
+        setSearchParams(prev => ({ ...prev, mode: 'none' }))
         notification.success('Документ удалён')
     }
 
@@ -112,10 +81,10 @@ function DocumentsPage() {
 
         // POST /api/documents/{docId}/share
         const newAccess = {
-        id: Date.now(),
-        username: shareEmail.split('@')[0],
-        email: shareEmail.trim(),
-        access: shareAccess
+            id: Date.now(),
+            username: shareEmail.split('@')[0],
+            email: shareEmail.trim(),
+            access: shareAccess
         }
 
         // setDocuments(prev => prev.map(doc => 
@@ -149,8 +118,9 @@ function DocumentsPage() {
                     <div>
                         <h5 className='fw-semibold mb-1'>Мои документы</h5>
                         <p className='text-muted small mb-0'>
-                            {user?.documents?.length} {user?.documents?.length === 1 ? 'документ' : 
-                            user?.documents?.length < 5 ? 'документа' : 'документов'}
+                            {user?.documents?.length} {user?.documents?.length === 1
+                                ? 'документ'
+                                : user?.documents?.length < 5 ? 'документа' : 'документов'}
                         </p>
                     </div>
                     
@@ -158,7 +128,7 @@ function DocumentsPage() {
                         variant='dark'
                         size='sm'
                         className='rounded-pill px-3 d-flex align-items-center gap-2'
-                        onClick={() => setShowCreate(true)}
+                        onClick={() => setSearchParams(prev => ({ ...prev, mode: 'create' }))}
                     >
                         <PlusCircle size={16} />
                         Создать
@@ -168,22 +138,24 @@ function DocumentsPage() {
                 {/* Список документов */}
                 {user?.documents?.length === 0 ? (
                     <Card className='border-0 shadow-sm'>
-                    <Card.Body className='text-center py-5'>
-                        <FileEarmarkText size={48} className='text-muted opacity-25 mb-3' />
-                        <h6 className='text-muted mb-2'>Нет документов</h6>
-                        <p className='text-muted small mb-3'>
-                            Создайте первый документ и начните работу
-                        </p>
-                        <Button
-                            variant='outline-dark'
-                            size='sm'
-                            className='rounded-pill'
-                            onClick={() => setShowCreate(true)}
-                        >
-                            <PlusCircle size={14} className='me-1' />
-                            Создать документ
-                        </Button>
-                    </Card.Body>
+                        <Card.Body className='text-center py-5'>
+                            <FileEarmarkText size={48} className='text-muted opacity-25 mb-3' />
+                            <h6 className='text-muted mb-2'>Нет документов</h6>
+                            <p className='text-muted small mb-3'>
+                                Создайте первый документ и начните работу
+                            </p>
+                            <Button
+                                variant='outline-dark'
+                                size='sm'
+                                className='rounded-pill'
+                                onClick={() => setSearchParams(prev => ({ ...prev, mode: 'create' }))}
+                            >
+                                <div className="flex items-center">
+                                    <PlusCircle size={14} className='me-1' />
+                                    Создать документ
+                                </div>
+                            </Button>
+                        </Card.Body>
                     </Card>
                 ) : (
                     <div className='d-flex flex-column gap-2'>
@@ -195,73 +167,73 @@ function DocumentsPage() {
                                         <div 
                                             className='flex-grow-1 d-flex align-items-center gap-3'
                                             style={{ cursor: 'pointer' }}
-                                            onClick={() => navigate(`/editor?id=${doc.id}`)}
+                                            onClick={() => navigate(`/editor?document=${doc.id}`)}
                                         >
                                             <div className='bg-primary bg-opacity-10 rounded-circle p-2 flex-shrink-0'>
-                                            <FileEarmarkText size={18} className='text-primary' />
+                                                <FileEarmarkText size={18} className='text-primary' />
                                             </div>
                                             
                                             <div className='min-w-0 flex-grow-1'>
-                                            <div className='fw-medium small text-truncate'>
-                                                {doc.title}
-                                            </div>
-                                            <div className='d-flex align-items-center gap-3 mt-1'>
-                                                <span className='text-muted small d-flex align-items-center gap-1'>
-                                                <Clock size={12} />
-                                                {new Date(doc.lastUpdated).toLocaleDateString('ru-RU', {
-                                                    day: 'numeric',
-                                                    month: 'short',
-                                                    hour: '2-digit',
-                                                    minute: '2-digit'
-                                                })}
-                                                </span>
-                                                {doc.documentAccesses.length > 0 && (
-                                                <span className='text-muted small d-flex align-items-center gap-1'>
-                                                    <People size={12} />
-                                                    {doc.sharedWith.length}
-                                                </span>
-                                                )}
-                                            </div>
+                                                <div className='fw-medium small text-truncate'>
+                                                    {doc.title}
+                                                </div>
+                                                <div className='d-flex align-items-center gap-3 mt-1'>
+                                                    <span className='text-muted small d-flex align-items-center gap-1'>
+                                                    <Clock size={12} />
+                                                    {new Date(doc.lastUpdated).toLocaleDateString('ru-RU', {
+                                                        day: 'numeric',
+                                                        month: 'short',
+                                                        hour: '2-digit',
+                                                        minute: '2-digit'
+                                                    })}
+                                                    </span>
+                                                    {doc.documentAccesses.length > 0 && (
+                                                    <span className='text-muted small d-flex align-items-center gap-1'>
+                                                        <People size={12} />
+                                                        {doc.sharedWith.length}
+                                                    </span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
 
                                         {/* Кнопки действий */}
                                         <div className='d-flex align-items-center gap-1 flex-shrink-0'>
                                             <Button
-                                            variant='light'
-                                            size='sm'
-                                            className='rounded-pill d-flex align-items-center gap-1'
-                                            onClick={(e) => {
-                                                e.stopPropagation()
-                                                setShowShare(doc.id)
-                                            }}
+                                                variant='light'
+                                                size='sm'
+                                                className='rounded-pill d-flex align-items-center gap-1'
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    setSearchParams(prev => ({ ...prev, mode: 'share' }))
+                                                }}
                                             >
-                                            <PersonPlus size={14} />
+                                                <PersonPlus size={14} />
                                             </Button>
                                             
                                             <Button
-                                            variant='light'
-                                            size='sm'
-                                            className='rounded-pill d-flex align-items-center gap-1'
-                                            onClick={(e) => {
-                                                e.stopPropagation()
-                                                setEditTitle(doc.title)
-                                                setShowEdit(doc.id)
-                                            }}
+                                                variant='light'
+                                                size='sm'
+                                                className='rounded-pill d-flex align-items-center gap-1'
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    setEditTitle(doc.title)
+                                                    setSearchParams(prev => ({ ...prev, mode: 'edit' }))
+                                                }}
                                             >
-                                            <PencilSquare size={14} />
+                                                <PencilSquare size={14} />
                                             </Button>
                                             
                                             <Button
-                                            variant='light'
-                                            size='sm'
-                                            className='rounded-pill d-flex align-items-center gap-1 text-danger'
-                                            onClick={(e) => {
-                                                e.stopPropagation()
-                                                setShowDelete(doc.id)
-                                            }}
+                                                variant='light'
+                                                size='sm'
+                                                className='rounded-pill d-flex align-items-center gap-1 text-danger'
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    setSearchParams(prev => ({ ...prev, mode: 'delete' }))
+                                                }}
                                             >
-                                            <Trash size={14} />
+                                                <Trash size={14} />
                                             </Button>
                                         </div>
                                     </div>
@@ -303,61 +275,63 @@ function DocumentsPage() {
             </div>
 
             {/* Модалка создания */}
-            <Modal show={showCreate} onHide={() => setShowCreate(false)} centered>
+            <Modal show={searchParams.get('mode') === 'create'} onHide={() => setSearchParams(prev => ({ ...prev, mode: 'none' }))} centered>
                 <Modal.Body className='p-4'>
                     <h6 className='fw-semibold mb-3'>Новый документ</h6>
                     <Form.Group className='mb-3'>
-                    <Form.Label className='small fw-medium text-secondary'>
-                        Название
-                    </Form.Label>
-                    <Form.Control
-                        type='text'
-                        value={newTitle}
-                        onChange={(e) => setNewTitle(e.target.value)}
-                        placeholder='Введите название документа'
-                        className='rounded-pill px-3 py-2'
-                        onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-                        autoFocus
-                    />
+                        <Form.Label className='small fw-medium text-secondary'>
+                            Название
+                        </Form.Label>
+                        <Form.Control
+                            type='text'
+                            value={newTitle}
+                            onChange={(e) => setNewTitle(e.target.value)}
+                            placeholder='Введите название документа'
+                            className='rounded-pill px-3 py-2'
+                            onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+                            autoFocus
+                        />
                     </Form.Group>
-                    <div className='d-flex gap-2 justify-content-end'>
-                        <Button
-                            variant='light'
-                            size='sm'
-                            className='rounded-pill px-3'
-                            onClick={() => {
-                            setShowCreate(false)
-                            setNewTitle('')
-                            }}
-                        >
-                            Отмена
-                        </Button>
-                        <Button
-                            variant='dark'
-                            size='sm'
-                            className='rounded-pill px-3'
-                            onClick={handleCreate}
-                        >
-                            Создать
-                        </Button>
-                    </div>
+                        <div className='d-flex gap-2 justify-content-end'>
+                            <Button
+                                variant='light'
+                                size='sm'
+                                className='rounded-pill px-3'
+                                onClick={() => {
+                                setSearchParams(prev => ({ ...prev, mode: 'none' }))
+                                setNewTitle('')
+                                }}
+                            >
+                                Отмена
+                            </Button>
+                            <Button
+                                variant='dark'
+                                size='sm'
+                                className='rounded-pill px-3'
+                                onClick={handleCreate}
+                            >
+                                Создать
+                            </Button>
+                        </div>
                 </Modal.Body>
             </Modal>
 
             {/* Модалка редактирования названия */}
-            <Modal show={showEdit !== null} onHide={() => setShowEdit(null)} centered>
+            <Modal show={searchParams.get('mode') === 'edit'} onHide={() => setSearchParams(prev => ({ ...prev, mode: 'none' }))} centered>
                 <Modal.Body className='p-4'>
                     <h6 className='fw-semibold mb-3'>Переименовать документ</h6>
                     <Form.Group className='mb-3'>
-                    <Form.Control
-                        type='text'
-                        value={editTitle}
-                        onChange={(e) => setEditTitle(e.target.value)}
-                        placeholder='Новое название'
-                        className='rounded-pill px-3 py-2'
-                        onKeyDown={(e) => e.key === 'Enter' && handleEdit(showEdit)}
-                        autoFocus
-                    />
+                        <Form.Control
+                            type='text'
+                            value={editTitle}
+                            onChange={(e) => setEditTitle(e.target.value)}
+                            placeholder='Новое название'
+                            className='rounded-pill px-3 py-2'
+                            onKeyDown={(e) => e.key === 'Enter'
+                                && handleEdit(searchParams.get('selected'))
+                            }
+                            autoFocus
+                        />
                     </Form.Group>
                     <div className='d-flex gap-2 justify-content-end'>
                         <Button
@@ -365,8 +339,8 @@ function DocumentsPage() {
                             size='sm'
                             className='rounded-pill px-3'
                             onClick={() => {
-                            setShowEdit(null)
-                            setEditTitle('')
+                                setSearchParams(prev => ({ ...prev, mode: 'none' }))
+                                setEditTitle('')
                             }}
                         >
                             Отмена
@@ -375,7 +349,7 @@ function DocumentsPage() {
                             variant='dark'
                             size='sm'
                             className='rounded-pill px-3'
-                            onClick={() => handleEdit(showEdit)}
+                            onClick={() => handleEdit(searchParams.get('selected'))}
                         >
                             Сохранить
                         </Button>
@@ -384,26 +358,26 @@ function DocumentsPage() {
             </Modal>
 
             {/* Модалка удаления */}
-            <Modal show={showDelete !== null} onHide={() => setShowDelete(null)} centered>
+            <Modal show={searchParams.get('mode') === 'delete'} onHide={() => setSearchParams(prev => ({ ...prev, mode: 'none' }))} centered>
                 <Modal.Body className='p-4 text-center'>
                     <div
                         className='bg-danger bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3'
                         style={{ width: '48px', height: '48px' }}
                     >
                         <Trash size={24} className='text-danger' />
-                        </div>
-                        <h6 className='fw-semibold mb-2'>Удалить документ?</h6>
-                        <p className='text-muted small mb-3'>
-                        Это действие нельзя отменить.
-                        {user?.documents?.find(d => d.id === showDelete)?.sharedWith.length > 0 && 
-                            ' Доступ у соавторов также будет отозван.'}
-                        </p>
-                        <div className='d-flex gap-2 justify-content-center'>
+                    </div>
+                    <h6 className='fw-semibold mb-2'>Удалить документ?</h6>
+                    <p className='text-muted small mb-3'>
+                    Это действие нельзя отменить.
+                    {user?.documents?.find(d => d.id === searchParams.get('selected'))?.accessToDocuments.length > 0 && 
+                        ' Доступ у соавторов также будет отозван.'}
+                    </p>
+                    <div className='d-flex gap-2 justify-content-center'>
                         <Button
                             variant='light'
                             size='sm'
                             className='rounded-pill px-3'
-                            onClick={() => setShowDelete(null)}
+                            onClick={() => setSearchParams(prev => ({ ...prev, mode: 'none' }))}
                         >
                             Отмена
                         </Button>
@@ -411,7 +385,7 @@ function DocumentsPage() {
                             variant='danger'
                             size='sm'
                             className='rounded-pill px-3'
-                            onClick={() => handleDelete(showDelete)}
+                            onClick={() => handleDelete(searchParams.get('selected'))}
                         >
                             Удалить
                         </Button>
@@ -420,47 +394,47 @@ function DocumentsPage() {
             </Modal>
 
             {/* Модалка раздачи прав */}
-            <Modal show={showShare !== null} onHide={() => setShowShare(null)} centered>
+            <Modal show={searchParams.get('mode') === 'share'} onHide={() => setSearchParams(prev => ({ ...prev, mode: 'none' }))} centered>
                 <Modal.Body className='p-4'>
                     <h6 className='fw-semibold mb-3'>
-                    Доступ к документу
+                        Доступ к документу
                     </h6>
 
                     {/* Текущие пользователи */}
-                    {user?.documents?.find(d => d.id === showShare)?.sharedWith.length > 0 && (
-                    <div className='mb-3'>
-                        <p className='small fw-medium text-secondary mb-2'>Текущий доступ:</p>
-                        {user?.documents
-                            ?.find(d => d.id === showShare)
-                            ?.sharedWith.map(access => (
-                                <div
-                                    key={access.id}
-                                    className='d-flex align-items-center justify-content-between bg-light rounded-3 p-2 mb-1'
-                                >
-                                    <div className='d-flex align-items-center gap-2'>
-                                        <Person size={14} className='text-muted' />
-                                        <div>
-                                            <div className='small fw-medium'>{access.username}</div>
-                                            <div className='small text-muted'>{access.email}</div>
+                    {user?.documents?.find(d => d.id === searchParams.get('selected'))?.sharedWith.length > 0 && (
+                        <div className='mb-3'>
+                            <p className='small fw-medium text-secondary mb-2'>Текущий доступ:</p>
+                            {user?.documents
+                                ?.find(d => d.id === searchParams.get('selected'))
+                                ?.sharedWith.map(access => (
+                                    <div
+                                        key={access.id}
+                                        className='d-flex align-items-center justify-content-between bg-light rounded-3 p-2 mb-1'
+                                    >
+                                        <div className='d-flex align-items-center gap-2'>
+                                            <Person size={14} className='text-muted' />
+                                            <div>
+                                                <div className='small fw-medium'>{access.username}</div>
+                                                <div className='small text-muted'>{access.email}</div>
+                                            </div>
+                                        </div>
+                                        <div className='d-flex align-items-center gap-2'>
+                                            <span className='small text-muted'>
+                                                {access.access === 'write' ? 'Редактор' : 'Читатель'}
+                                            </span>
+                                            <Button
+                                                variant='link'
+                                                size='sm'
+                                                className='p-0 text-muted'
+                                                onClick={() => searchParams.get('selected') && handleRemoveAccess(searchParams.get('selected'), access.id)}
+                                            >
+                                                <XLg size={12} />
+                                            </Button>
                                         </div>
                                     </div>
-                                    <div className='d-flex align-items-center gap-2'>
-                                        <span className='small text-muted'>
-                                            {access.access === 'write' ? 'Редактор' : 'Читатель'}
-                                        </span>
-                                        <Button
-                                            variant='link'
-                                            size='sm'
-                                            className='p-0 text-muted'
-                                            onClick={() => showShare && handleRemoveAccess(showShare, access.id)}
-                                        >
-                                            <XLg size={12} />
-                                        </Button>
-                                    </div>
-                                </div>
-                            ))
-                        }
-                    </div>
+                                ))
+                            }
+                        </div>
                     )}
 
                     {/* Форма добавления */}
@@ -495,21 +469,21 @@ function DocumentsPage() {
                         variant='dark'
                         size='sm'
                         className='w-100 rounded-pill py-2 mb-2'
-                        onClick={() => showShare && handleShare(showShare)}
+                        onClick={() => searchParams.get('selected') && handleShare(searchParams.get('selected'))}
                     >
                         <PersonPlus size={14} className='me-1' />
                         Предоставить доступ
                     </Button>
 
                     <Button
-                    variant='light'
-                    size='sm'
-                    className='w-100 rounded-pill'
-                    onClick={() => {
-                        setShowShare(null)
-                        setShareEmail('')
-                        setShareAccess('write')
-                    }}
+                        variant='light'
+                        size='sm'
+                        className='w-100 rounded-pill'
+                        onClick={() => {
+                            setSearchParams(prev => ({ ...prev, mode: 'none' }))
+                            setShareEmail('')
+                            setShareAccess('write')
+                        }}
                     > Закрыть</Button>
                 </Modal.Body>
             </Modal>

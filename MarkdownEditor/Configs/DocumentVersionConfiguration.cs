@@ -16,10 +16,9 @@ namespace MarkdownEditor.Configs
                 .HasColumnType("text")
                 .HasDefaultValue("");
 
-            builder
-                .HasOne(dv => dv.Document)
-                .WithMany(d => d.DocumentVersions)
-                .HasForeignKey(dv => dv.DocumentId)
+            builder.HasOne(dv => dv.Access)
+                .WithMany(da => da.SavedVersions)
+                .HasForeignKey(dv => dv.AccessId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }
