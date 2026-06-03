@@ -9,6 +9,7 @@ import ProfilePage from './pages/ProfilePage'
 import NotFoundPage from './pages/NotFoundPage'
 import DocumentsPage from './pages/DocumentsPage'
 import UserProfilePage from './pages/UserProfilePage'
+import DocumentManagePage from './pages/DocumentManagePage'
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
               <Route path='/documents' element={<DocumentsPage />} />
               <Route path='/profile' element={<ProfilePage />} />
               <Route path='/user/:username' element={<UserProfilePage />} />
+              <Route path='/document/manage' element={<DocumentManagePage />} />
             </Route>
           </Route>
         </Routes>
