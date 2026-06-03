@@ -255,8 +255,7 @@ function EditorPage() {
                 {/* Подсказка по навигации */}
                 <div className='text-center mt-3'>
                     <p className='text-muted small mb-0'>
-                        💡 Поддерживается Markdown • Используйте <kbd className='bg-light'>Ctrl + B</kbd> для жирного, 
-                        <kbd className='bg-light ms-1'>Ctrl + I</kbd> для курсива
+                        Совместный редактор документов. Все изменения сохраняются автоматически
                     </p>
                 </div>
             </div>

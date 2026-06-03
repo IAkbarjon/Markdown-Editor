@@ -8,6 +8,7 @@ import ProtectedRoute from './contexts/ProtectedRoute'
 import ProfilePage from './pages/ProfilePage'
 import NotFoundPage from './pages/NotFoundPage'
 import DocumentsPage from './pages/DocumentsPage'
+import UserProfilePage from './pages/UserProfilePage'
 
 function App() {
   return (
@@ -23,9 +24,10 @@ function App() {
           </Route>
           <Route element={<ProtectedRoute requireAuthorization />}>
             <Route element={<Header />}>
-              <Route path='/profile' element={<ProfilePage />} />
               <Route path='/editor' element={<EditorPage />} />
               <Route path='/documents' element={<DocumentsPage />} />
+              <Route path='/profile' element={<ProfilePage />} />
+              <Route path='/user/:username' element={<UserProfilePage />} />
             </Route>
           </Route>
         </Routes>

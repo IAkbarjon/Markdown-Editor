@@ -156,7 +156,16 @@ function HomePage() {
                                     </div>
                                     <div>
                                         <div className='small text-muted'>Недавних</div>
-                                        <div className='fw-bold fs-5'>{user.documents?.length ?? 0}</div>
+                                        <div className='fw-bold fs-5'>
+                                            {
+                                                user.documents?.filter(doc => {
+                                                    const lastUpdated = new Date(doc.lastUpdated)
+                                                    const now = new Date()
+                                                    const diffMs = now.getTime() - lastUpdated.getTime()
+                                                    return Math.floor(diffMs / (1000 * 60 * 60)) < 72
+                                                }).length ?? 0
+                                            }
+                                        </div>
                                     </div>
                                 </Card.Body>
                             </Card>
@@ -192,13 +201,13 @@ function HomePage() {
                                         key={doc.id}
                                         className='d-flex align-items-center gap-3 p-2 rounded-3 hover:bg-light'
                                         style={{ cursor: 'pointer' }}
-                                        onClick={() => navigate(`/editor?id=${doc.id}`)}
+                                        onClick={() => navigate(`/editor/?document=${doc.id}`)}
                                     >
                                         <FileEarmarkText size={18} className='text-primary flex-shrink-0' />
                                         <div className='flex-grow-1 min-w-0'>
                                             <div className='fw-medium small text-truncate'>{doc.title}</div>
                                             <div className='text-muted small'>
-                                                {new Date(doc.updatedAt).toLocaleDateString('ru-RU')}
+                                                {new Date(doc.lastUpdated).toLocaleDateString('ru-RU')}
                                             </div>
                                         </div>
                                         {doc.shared && (
