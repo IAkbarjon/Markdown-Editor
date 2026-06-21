@@ -102,7 +102,7 @@ const request = ({ method, path, body=undefined, secure=false, skipCsrf=false })
                     return { success: true, data: null, status: 204, timestamp: new Date() }
                 }
 
-                let data;
+                let data
                 try {
                     data = await response.json()
                 } catch (e) {

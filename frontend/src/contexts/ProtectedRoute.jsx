@@ -18,23 +18,31 @@ function ProtectedRoute({ requireAuthorization=false }) {
         httpService.refreshCsrf()
     }
 
+    const loadDocuments = () => {
+        httpService.get('/document/all')
+            .then(docRes => {
+                setUser(prev => ({
+                    ...prev,
+                    documents: docRes.data ?? []
+                }))
+            })
+            .catch(docErr => {
+                console.error('Не удалось загрузить документы:', docErr)
+                notification.error('Не удалось загрузить документы')
+            })
+            .finally(() => setIsLoading(false))
+    }
+
     // Проверка авторизаций
     const checkAuth = () => {
         httpService.get('/authorization/check')
             .then(userRes => {
-                httpService.get('/document/all')
-                    .then(docRes => {
-                        setUser({
-                            ...userRes.data,
-                            documents: docRes.data ?? []
-                        })
-                    })
-                    .catch(docErr => {
-                        console.error('Не удалось загрузить документы:', docErr)
-                        notification.error('Не удалось загрузить документы')
-                    })
+                setUser({
+                    ...userRes.data,
+                    documents: userRes.data.documents ?? []
+                })
+                loadDocuments()
             })
-            .finally(() => setIsLoading(false))
     }
 
     useEffect(() => {
@@ -49,6 +57,7 @@ function ProtectedRoute({ requireAuthorization=false }) {
 
     // Вход
     const login = ({ email, password }) => {
+        setIsLoading(true)
         httpService.post('/authorization/login', {
             email: email,
             password: password
@@ -57,6 +66,7 @@ function ProtectedRoute({ requireAuthorization=false }) {
                 notification.success(`Пользователь ${res.data.firstName} совершил вход`)
                 setUser(res.data)
                 csrfGenerage()
+                loadDocuments()
             })
             .catch(err => {
                 notification.error(err.message || 'Ошибка запроса')
@@ -65,25 +75,31 @@ function ProtectedRoute({ requireAuthorization=false }) {
 
     // Регистрация
     const register = ({ firstName, lastName, email, password }) => {
+        setIsLoading(true)
         httpService.post('/authorization/register', {
             email: email,
             firstName: firstName,
             lastName: lastName,
             password: password
         })
-            .then(res => {
-                notification.success(`Пользователь ${res.data.firstName} зарегистрирован`)
-                setUser(res.data)
+            .then(userRes => {
+                notification.success(`Пользователь ${userRes.data.firstName} зарегистрирован`)
+                setUser({
+                    ...userRes.data,
+                    documents: []
+                })
                 csrfGenerage()
             })
             .catch(err => {
                 console.error(err)
                 notification.error(err.message || 'Произошла ошибка')
             })
+            .finally(() => setIsLoading(false))
     }
 
     // Выход
     const logout = () => {
+        setIsLoading(true)
         httpService.delete('/authorization/logout', )
             .then(() => {
                 setUser(null)
@@ -91,9 +107,10 @@ function ProtectedRoute({ requireAuthorization=false }) {
             .catch(err => {
                 notification.error(err?.message || 'Не удалось обработать выход')
             })
+            .finally(() => setIsLoading(false))
     }
     
-    const value = { user, setUser, checkAuth, login, register, logout }
+    const value = { user, isLoading, setUser, checkAuth, login, register, logout, setIsLoading }
 
     if (isLoading) {
         return (

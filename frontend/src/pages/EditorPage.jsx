@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSignalR } from '../hooks/useSignalR'
 import MDEditor from '@uiw/react-md-editor'
 import rehypeSanitize from 'rehype-sanitize'
@@ -14,14 +14,22 @@ function EditorPage() {
     const [isTyping, setIsTyping] = useState(false)
     const [showPreview, setShowPreview] = useState(true)
 
-    const { user, loading } = useUser()
+    const { user, isLoading } = useUser()
     const [searchParams] = useSearchParams()
-    const { content, updateContent, sendTyping, isConnected, typingUser } = useSignalR(
-        searchParams.get('document')
-    )
+    const documentId = searchParams.get('document')
+
+    const { content, updateContent, sendTyping, isConnected, typingUser } = useSignalR(documentId)
+
+    const foundDoc = useMemo(() => {
+        if (!user?.documents || !Array.isArray(user.documents) || !documentId) {
+            return null
+        }
+        return user.documents.find(doc => doc.id === documentId) // Используем строгое сравнение ===
+    }, [user?.documents, documentId])
 
     useEffect(() => {
-        if (loading || !user)
+        console.log('iter')
+        if (isLoading || !user || !user.documents || !Array.isArray(user.documents))
             return
 
         const id = searchParams.get('document')
@@ -31,14 +39,13 @@ function EditorPage() {
         }
 
         const foundDoc = user?.documents?.find(doc => doc.id == id)
-
         if (!foundDoc) {
             alert('Такого документа нет')
             return
         }
         
         setDocument(foundDoc)
-    }, [searchParams, user?.documents, loading])
+    }, [documentId, user, isLoading])
 
     const handleChange = (newContent) => {
         updateContent(newContent)
@@ -81,10 +88,6 @@ function EditorPage() {
             </div>
         )
     }
-
-    // if (!loading) {
-    //     return <LoadingPage />
-    // }
 
     return (
         <div className='min-vh-100 bg-light'>

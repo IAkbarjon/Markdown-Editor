@@ -9,10 +9,8 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // CORS
-builder.Services.AddCors(options =>
-{
-    options.AddDefaultPolicy(policy =>
-    {
+builder.Services.AddCors(options => {
+    options.AddDefaultPolicy(policy => {
         policy.WithOrigins("http://localhost:3000")
             .AllowAnyHeader()
             .AllowAnyMethod()
@@ -20,8 +18,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddControllersWithViews(options =>
-{
+builder.Services.AddControllersWithViews(options => {
     options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
 });
 
@@ -32,24 +29,21 @@ builder.Services.AddOpenApi();
 builder.Services.AddSignalR();
 builder.Services.AddDbContext<ApplicationContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")!,
-    npgsqlOptions =>
-    {
+    npgsqlOptions => {
         npgsqlOptions.EnableRetryOnFailure();
     }));
 builder.Services.AddAuthorization();
 
 // Cookie authentication
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
-    {
+    .AddCookie(options => {
         options.Cookie.HttpOnly = true;
         options.Cookie.SameSite = SameSiteMode.None;
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     });
 
 // CSRF
-builder.Services.AddAntiforgery(options =>
-{
+builder.Services.AddAntiforgery(options => {
     options.HeaderName = "X-XSRF-TOKEN";
     options.Cookie.Name = "XSRF-TOKEN";
     options.Cookie.HttpOnly = false;
@@ -60,24 +54,21 @@ builder.Services.AddAntiforgery(options =>
 var app = builder.Build();
 
 // Security Headers
-app.Use(async (context, next) =>
-{
+app.Use(async (context, next) => {
     context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
     context.Response.Headers.Append("X-Frame-Options", "DENY");
     await next();
 });
 
 // DB init
-using (var scope = app.Services.CreateScope())
-{
+using (var scope = app.Services.CreateScope()) {
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationContext>();
 
     dbContext.Database.EnsureCreated();
 }
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
+if (app.Environment.IsDevelopment()) {
     app.MapOpenApi();
 }
 
@@ -86,12 +77,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 // CSRF Token endpoint
-app.MapGet("/api/csrf-token", async (IAntiforgery antiforgery, HttpContext context) =>
-{
-    if (context.Request.Cookies.ContainsKey("XSRF-TOKEN"))
-    {
-        context.Response.Cookies.Delete("XSRF-TOKEN", new CookieOptions
-        {
+app.MapGet("/api/csrf-token", async (IAntiforgery antiforgery, HttpContext context) => {
+    if (context.Request.Cookies.ContainsKey("XSRF-TOKEN")) {
+        context.Response.Cookies.Delete("XSRF-TOKEN", new CookieOptions {
             SameSite = SameSiteMode.None,
             Secure = true,
             Path  = "/"
@@ -100,26 +88,22 @@ app.MapGet("/api/csrf-token", async (IAntiforgery antiforgery, HttpContext conte
     
     var tokens = antiforgery.GetAndStoreTokens(context);
 
-    if (tokens == null)
-    {
+    if (tokens == null) {
         Console.WriteLine("ERROR: tokens is null");
         return Results.Problem("Failed to generate CSRF tokens");
     }
 
-    if (string.IsNullOrEmpty(tokens.CookieToken))
-    {
+    if (string.IsNullOrEmpty(tokens.CookieToken)) {
         Console.WriteLine("ERROR: CookieTokens is null or empty");
         return Results.Problem("Failed to generate CookieToken");
     }
 
-    if (string.IsNullOrEmpty(tokens.RequestToken))
-    {
+    if (string.IsNullOrEmpty(tokens.RequestToken)) {
         Console.WriteLine("ERROR: RequestToken is null or empty");
         return Results.Problem("Failed to generate RequestToken");
     }
 
-    context.Response.Cookies.Append("XSRF-TOKEN", tokens.CookieToken!, new CookieOptions
-    {
+    context.Response.Cookies.Append("XSRF-TOKEN", tokens.CookieToken!, new CookieOptions {
         HttpOnly = false,
         SameSite = SameSiteMode.None,
         Secure = true,
