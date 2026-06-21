@@ -5,8 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
-namespace MarkdownEditor.Controllers
-{
+namespace MarkdownEditor.Controllers {
     [Route("api/users")]
     [ApiController]
     public class UserController : ControllerBase {
@@ -20,22 +19,17 @@ namespace MarkdownEditor.Controllers
 
         [HttpGet("recent")]
         public async Task<IActionResult> GetRecentUsers() {
-            //var recentUsers = _context.Users
-            //    .AsNoTracking()
-            //    .Include(u => u.AccessToDocuments)
-            //    .Where(u => u.AccessToDocuments.Any(a => a.Document.OwnerId == id));
-
             if (Request.Cookies.TryGetValue("session", out var session)) {
                 int? userId = _jwtService.GetUserIdFromToken(session);
-                if (userId == null || !_context.Users.Any(u => u.Id == userId))
-                {
+                if (userId == null || !_context.Users.Any(u => u.Id == userId)) {
                     return Unauthorized(new ApiError("Пользователь не авторизован", 401));
                 }
 
-                User? existUser = await GetUser(u => u.Id == userId);
+                User? existUser = await _context.Users
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(u => u.Id == userId);
 
-                if (existUser == null)
-                {
+                if (existUser == null) {
                     return BadRequest(new ApiError("Токен неправильного формата", 400));
                 }
 
@@ -92,15 +86,15 @@ namespace MarkdownEditor.Controllers
 
             if (Request.Cookies.TryGetValue("session", out var session)) {
                 int? userId = _jwtService.GetUserIdFromToken(session);
-                if (userId == null || !_context.Users.Any(u => u.Id == userId))
-                {
+                if (userId == null || !_context.Users.Any(u => u.Id == userId)) {
                     return Unauthorized(new ApiError("Пользователь не авторизован", 401));
                 }
 
-                User? existUser = await GetUser(u => u.Id == userId);
+                User? existUser =await _context.Users
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(u => u.Id == userId);
 
-                if (existUser == null)
-                {
+                if (existUser == null) {
                     return BadRequest(new ApiError("Токен неправильного формата", 400));
                 }
 
@@ -140,17 +134,16 @@ namespace MarkdownEditor.Controllers
         }
 
         [HttpGet("{username}")]
-        public async Task<IActionResult> GetUserData(string username)
-        {
-            if (string.IsNullOrWhiteSpace(username))
-            {
+        public async Task<IActionResult> GetUserData(string username) {
+            if (string.IsNullOrWhiteSpace(username)) {
                 return BadRequest(new { error = "Ник пользователя объязателен" });
             }
 
-            var userData = await GetUser(user => user.Username == username);
+            var userData = await _context.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Username == username);
 
-            if (userData == null)
-            {
+            if (userData == null) {
                 return NotFound(new { error = $"Пользователя '{username}' не существует" });
             }
 
@@ -159,16 +152,9 @@ namespace MarkdownEditor.Controllers
             return Ok(new ApiResponse<User>(userData));
         }
 
-        private async Task<User?> GetUser(Expression<Func<User, bool>> func)
-        {
+        private async Task<User?> GetUser(Expression<Func<User, bool>> func) {
             User? user = await _context.Users
                 .AsNoTracking()
-                .Include(u => u.Documents)!
-                    .ThenInclude(d => d.DocumentAccesses)
-                .Include(u => u.Documents)!
-                    .ThenInclude(d => d.DocumentVersions)
-                .Include(u => u.AccessToDocuments)!
-                    .ThenInclude(a => a.Document)
                 .FirstOrDefaultAsync(func);
 
             return user;

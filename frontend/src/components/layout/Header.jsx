@@ -23,10 +23,6 @@ function Header() {
         }
     }, [showSearchModal, user])
 
-    useEffect(() => {
-        console.log(searchResults)
-    }, [searchResults])
-
     // Поиск с дебаунсом
     useEffect(() => {
         if (!showSearchModal) return
@@ -296,8 +292,10 @@ function Header() {
                                                 size='sm'
                                                 className='rounded-pill'
                                             >
-                                                <Person size={14} className='me-1' />
-                                                Открыть
+                                                <div className="flex items-center">
+                                                    <Person size={14} className='me-1' />
+                                                    Открыть
+                                                </div>
                                             </Button>
                                         </div>
                                     ))}

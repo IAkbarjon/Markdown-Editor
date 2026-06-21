@@ -21,8 +21,18 @@ function ProtectedRoute({ requireAuthorization=false }) {
     // Проверка авторизаций
     const checkAuth = () => {
         httpService.get('/authorization/check')
-            .then(res => {
-                setUser(res.data)
+            .then(userRes => {
+                httpService.get('/document/all')
+                    .then(docRes => {
+                        setUser({
+                            ...userRes.data,
+                            documents: docRes.data ?? []
+                        })
+                    })
+                    .catch(docErr => {
+                        console.error('Не удалось загрузить документы:', docErr)
+                        notification.error('Не удалось загрузить документы')
+                    })
             })
             .finally(() => setIsLoading(false))
     }

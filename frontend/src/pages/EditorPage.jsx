@@ -7,26 +7,30 @@ import { useSearchParams } from 'react-router-dom'
 import useUser from '../hooks/useUser'
 import { Button, Card, Badge, OverlayTrigger, Tooltip } from 'react-bootstrap'
 import { FileEarmarkText, People, PencilSquare, Clock, Eye, EyeSlash, ArrowLeft, InfoCircle, Person } from 'react-bootstrap-icons'
+import LoadingPage from './LoadingPage'
 
 function EditorPage() {
     const [document, setDocument] = useState(undefined)
     const [isTyping, setIsTyping] = useState(false)
     const [showPreview, setShowPreview] = useState(true)
 
-    const { user } = useUser()
+    const { user, loading } = useUser()
     const [searchParams] = useSearchParams()
     const { content, updateContent, sendTyping, isConnected, typingUser } = useSignalR(
         searchParams.get('document')
     )
 
     useEffect(() => {
+        if (loading || !user)
+            return
+
         const id = searchParams.get('document')
         if (!id) {
             alert('Не указан ID документа')
             return
         }
 
-        const foundDoc = user.documents?.find(doc => doc.id == id)
+        const foundDoc = user?.documents?.find(doc => doc.id == id)
 
         if (!foundDoc) {
             alert('Такого документа нет')
@@ -34,19 +38,19 @@ function EditorPage() {
         }
         
         setDocument(foundDoc)
-    }, [searchParams, user.documents])
+    }, [searchParams, user?.documents, loading])
 
     const handleChange = (newContent) => {
         updateContent(newContent)
     }
 
-    const handleKeyDown = useCallback(() => {
-        if (!isTyping) {
-            setIsTyping(true)
-            sendTyping(user?.username || 'Пользователь')
-            setTimeout(() => setIsTyping(false), 1000)
-        }
-    }, [isTyping, sendTyping, user?.username])
+    // const handleKeyDown = useCallback(() => {
+    //     if (!isTyping) {
+    //         setIsTyping(true)
+    //         sendTyping(user?.username || 'Пользователь')
+    //         setTimeout(() => setIsTyping(false), 1000)
+    //     }
+    // }, [isTyping, sendTyping, user?.username])
 
     // Форматирование даты
     const formatDate = (dateString) => {
@@ -77,6 +81,10 @@ function EditorPage() {
             </div>
         )
     }
+
+    // if (!loading) {
+    //     return <LoadingPage />
+    // }
 
     return (
         <div className='min-vh-100 bg-light'>
@@ -238,7 +246,7 @@ function EditorPage() {
                             <MDEditor
                                 value={content}
                                 onChange={handleChange}
-                                onKeyDown={handleKeyDown}
+                                // onKeyDown={handleKeyDown}
                                 preview={showPreview ? 'live' : 'edit'}
                                 hideToolbar={false}
                                 visibleDragbar={true}

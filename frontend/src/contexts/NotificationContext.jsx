@@ -77,7 +77,7 @@ function NotificationProvider({ children, maxNotifications=3 }) {
         <NotificationContext.Provider value={value}>
             {children}
 
-            <div className='fixed top-[20px] right-[20px] z-10 max-w-[350px] min-w-[250px] flex flex-col gap-[10px]'>
+            <div className='fixed top-[20px] right-[20px] z-9999 max-w-[350px] min-w-[250px] flex flex-col gap-[10px]'>
                 {notifications.map(notification => (
                     <Alert
                         key={notification.id}

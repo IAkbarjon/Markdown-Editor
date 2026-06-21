@@ -56,9 +56,6 @@ function DocumentsPage() {
         }
         
         // PUT /api/documents/{id}
-        // setDocuments(prev => prev.map(doc => 
-        //     doc.id === id ? { ...doc, title: editTitle.trim() } : doc
-        // ))
         setSearchParams(prev => ({ ...prev, mode: 'none' }))
         setEditTitle('')
         notification.success('Название обновлено')
@@ -87,12 +84,6 @@ function DocumentsPage() {
             access: shareAccess
         }
 
-        // setDocuments(prev => prev.map(doc => 
-        // doc.id === docId 
-        //     ? { ...doc, sharedWith: [...doc.sharedWith, newAccess] }
-        //     : doc
-        // ))
-
         setShareEmail('')
         setShareAccess('write')
         notification.success('Доступ предоставлен')
@@ -101,11 +92,6 @@ function DocumentsPage() {
     // Удаление доступа
     const handleRemoveAccess = (docId, accessId) => {
         // DELETE /api/documents/{docId}/access/{accessId}
-        // setDocuments(prev => prev.map(doc => 
-        // doc.id === docId
-        //     ? { ...doc, sharedWith: doc.sharedWith.filter(a => a.id !== accessId) }
-        //     : doc
-        // ))
         notification.info('Доступ отозван')
     }
 
@@ -190,7 +176,7 @@ function DocumentsPage() {
                                                     {doc.documentAccesses.length > 0 && (
                                                     <span className='text-muted small d-flex align-items-center gap-1'>
                                                         <People size={12} />
-                                                        {doc.sharedWith.length}
+                                                        {doc.documentAccesses.length}
                                                     </span>
                                                     )}
                                                 </div>
@@ -203,6 +189,7 @@ function DocumentsPage() {
                                                 variant='light'
                                                 size='sm'
                                                 className='rounded-pill d-flex align-items-center gap-1'
+                                                title='дать доступ'
                                                 onClick={(e) => {
                                                     e.stopPropagation()
                                                     setSearchParams(prev => ({ ...prev, mode: 'share' }))
@@ -215,6 +202,7 @@ function DocumentsPage() {
                                                 variant='light'
                                                 size='sm'
                                                 className='rounded-pill d-flex align-items-center gap-1'
+                                                title='переименовать'
                                                 onClick={(e) => {
                                                     e.stopPropagation()
                                                     setEditTitle(doc.title)
@@ -228,6 +216,7 @@ function DocumentsPage() {
                                                 variant='light'
                                                 size='sm'
                                                 className='rounded-pill d-flex align-items-center gap-1 text-danger'
+                                                title='удалить'
                                                 onClick={(e) => {
                                                     e.stopPropagation()
                                                     setSearchParams(prev => ({ ...prev, mode: 'delete' }))
@@ -242,7 +231,7 @@ function DocumentsPage() {
                                     {doc.documentAccesses.length > 0 && (
                                         <div className='mt-2 pt-2 border-top'>
                                             <div className='d-flex flex-wrap gap-1'>
-                                            {doc.sharedWith.map(access => (
+                                            {doc.documentAccesses.map(access => (
                                                 <div
                                                     key={access.id}
                                                     className='d-flex align-items-center gap-1 bg-light rounded-pill px-2 py-1'
@@ -275,7 +264,7 @@ function DocumentsPage() {
             </div>
 
             {/* Модалка создания */}
-            <Modal show={searchParams.get('mode') === 'create'} onHide={() => setSearchParams(prev => ({ ...prev, mode: 'none' }))} centered>
+            <Modal show={searchParams.get('mode') === 'create'} onHide={() => navigate(-1)} centered>
                 <Modal.Body className='p-4'>
                     <h6 className='fw-semibold mb-3'>Новый документ</h6>
                     <Form.Group className='mb-3'>
@@ -298,20 +287,16 @@ function DocumentsPage() {
                                 size='sm'
                                 className='rounded-pill px-3'
                                 onClick={() => {
-                                setSearchParams(prev => ({ ...prev, mode: 'none' }))
-                                setNewTitle('')
+                                    setNewTitle('')
+                                    navigate(-1)
                                 }}
-                            >
-                                Отмена
-                            </Button>
+                            > Отмена</Button>
                             <Button
                                 variant='dark'
                                 size='sm'
                                 className='rounded-pill px-3'
                                 onClick={handleCreate}
-                            >
-                                Создать
-                            </Button>
+                            > Создать</Button>
                         </div>
                 </Modal.Body>
             </Modal>
@@ -342,17 +327,14 @@ function DocumentsPage() {
                                 setSearchParams(prev => ({ ...prev, mode: 'none' }))
                                 setEditTitle('')
                             }}
-                        >
-                            Отмена
-                        </Button>
+                        > Отмена</Button>
                         <Button
                             variant='dark'
                             size='sm'
                             className='rounded-pill px-3'
                             onClick={() => handleEdit(searchParams.get('selected'))}
-                        >
-                            Сохранить
-                        </Button>
+                            disabled={!editTitle.trim() || searchParams.get('selected')?.title.trim() == editTitle.trim()}
+                        > Сохранить</Button>
                     </div>
                 </Modal.Body>
             </Modal>
@@ -401,12 +383,12 @@ function DocumentsPage() {
                     </h6>
 
                     {/* Текущие пользователи */}
-                    {user?.documents?.find(d => d.id === searchParams.get('selected'))?.sharedWith.length > 0 && (
+                    {user?.documents?.find(d => d.id === searchParams.get('selected'))?.documentAccesses.length > 0 && (
                         <div className='mb-3'>
                             <p className='small fw-medium text-secondary mb-2'>Текущий доступ:</p>
                             {user?.documents
                                 ?.find(d => d.id === searchParams.get('selected'))
-                                ?.sharedWith.map(access => (
+                                ?.documentAccesses.map(access => (
                                     <div
                                         key={access.id}
                                         className='d-flex align-items-center justify-content-between bg-light rounded-3 p-2 mb-1'

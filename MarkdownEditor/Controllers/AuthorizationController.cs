@@ -9,16 +9,13 @@ using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using static System.Collections.Specialized.BitVector32;
 
-namespace MarkdownEditor.Controllers
-{
+namespace MarkdownEditor.Controllers {
     [Route("api/authorization")]
     [ApiController]
-    public class AuthorizationController : ControllerBase
-    {
+    public class AuthorizationController : ControllerBase {
         private readonly ApplicationContext _context;
         private readonly IJwtService _jwtService;
-        private readonly CookieOptions _cookieOptions = new CookieOptions
-        {
+        private readonly CookieOptions _cookieOptions = new CookieOptions {
             HttpOnly = true,
             Secure = true,
             SameSite = SameSiteMode.None,
@@ -26,28 +23,23 @@ namespace MarkdownEditor.Controllers
             Path = "/"
         };
 
-        public AuthorizationController(ApplicationContext context, IJwtService jwtService)
-        {
+        public AuthorizationController(ApplicationContext context, IJwtService jwtService) {
             _context = context;
             _jwtService = jwtService;
         }
 
         [HttpGet("check")]
         [IgnoreAntiforgeryToken]
-        public async Task<IActionResult> CheckAuth()
-        {
-            if (Request.Cookies.TryGetValue("session", out var session))
-            {
+        public async Task<IActionResult> CheckAuth() {
+            if (Request.Cookies.TryGetValue("session", out var session)) {
                 int? userId = _jwtService.GetUserIdFromToken(session);
-                if (userId == null || !_context.Users.Any(u => u.Id == userId))
-                {
+                if (userId == null || !_context.Users.Any(u => u.Id == userId)) {
                     return Unauthorized(new ApiError("Пользователь не авторизован", 401));
                 }
 
                 User? existUser = await GetUser(u => u.Id == userId);
 
-                if (existUser == null)
-                {
+                if (existUser == null) {
                     return BadRequest(new ApiError("Токен неправильного формата", 400));
                 }
 
@@ -61,12 +53,10 @@ namespace MarkdownEditor.Controllers
 
         [HttpPost("register")]
         [IgnoreAntiforgeryToken]
-        public async Task<IActionResult> Register([FromBody] User newUser)
-        {
+        public async Task<IActionResult> Register([FromBody] User newUser) {
             bool userExists = await _context.Users.AnyAsync(u => u.Email == newUser.Email);
 
-            if (userExists)
-            {
+            if (userExists) {
                 return BadRequest(new ApiError("Пользователь с такой почтой уже существует", 400));
             }
 
@@ -78,8 +68,7 @@ namespace MarkdownEditor.Controllers
 
             User? savedUser = await GetUser(u => u.Email == newUser.Email);
 
-            if (savedUser == null)
-            {
+            if (savedUser == null) {
                 return NotFound(new ApiError("Пользователя не существует", 404));
             }
 
@@ -90,26 +79,22 @@ namespace MarkdownEditor.Controllers
 
         [HttpPost("login")]
         [IgnoreAntiforgeryToken]
-        public async Task<IActionResult> Login([FromBody] User user)
-        {
+        public async Task<IActionResult> Login([FromBody] User user) {
             bool userExists = await _context.Users.AnyAsync(u => u.Email == user.Email);
             
             // Проверка существования пользователя
-            if (!userExists || user.Email == null)
-            {
+            if (!userExists || user.Email == null) {
                 return BadRequest(new ApiError("Пользователя с такой почтой не существует", 400));
             }
 
             User? existUser = await GetUser(u => u.Email == user.Email);
 
-            if (existUser == null)
-            {
+            if (existUser == null) {
                 return NotFound(new ApiError("Пользователя не существует", 404));
             }
 
             // Проверка совпадения пароля
-            if (!PasswordService.VerifyPassword(user.Password!, existUser.Password!))
-            {
+            if (!PasswordService.VerifyPassword(user.Password!, existUser.Password!)) {
                 return BadRequest(new ApiError("Неправильная почта или пароль", 400));
             }
 
@@ -119,15 +104,12 @@ namespace MarkdownEditor.Controllers
         }
 
         [HttpDelete("logout")]
-        public async Task<IActionResult> LogOut()
-        {
-            if (Request.Cookies.TryGetValue("session", out var _))
-            {
+        public async Task<IActionResult> LogOut() {
+            if (Request.Cookies.TryGetValue("session", out var _)) {
                 Response.Cookies.Delete("session", _cookieOptions);
             }
 
-            if (Request.Cookies.TryGetValue("XSRF-TOKEN", out var _))
-            {
+            if (Request.Cookies.TryGetValue("XSRF-TOKEN", out var _)) {
                 Response.Cookies.Delete("XSRF-TOKEN", _cookieOptions);
             }
 
@@ -135,20 +117,16 @@ namespace MarkdownEditor.Controllers
         }
 
         [HttpPatch("change-data")]
-        public async Task<IActionResult> ChangeData([FromBody] User updatedUser)
-        {
-            if (Request.Cookies.TryGetValue("session", out var session))
-            {
+        public async Task<IActionResult> ChangeData([FromBody] User updatedUser) {
+            if (Request.Cookies.TryGetValue("session", out var session)) {
                 int? userId = _jwtService.GetUserIdFromToken(session);
-                if (userId == null || !_context.Users.Any(u => u.Id == userId))
-                {
+                if (userId == null || !_context.Users.Any(u => u.Id == userId)) {
                     return BadRequest(new ApiError("Неправильный формат токена", 400));
                 }
 
                 var existingUser = await _context.Users.FindAsync(userId.Value);
 
-                if (existingUser == null)
-                {
+                if (existingUser == null) {
                     return NotFound(new ApiError("Пользвоатель не найден", 404));
                 }
 
@@ -171,13 +149,11 @@ namespace MarkdownEditor.Controllers
             return Unauthorized(new ApiError("Пользователь не авторизован", 401));
         }
 
-        private void SetSession(int userId)
-        {
+        private void SetSession(int userId) {
             Response.Cookies.Append("session", _jwtService.GenerateToken(userId), _cookieOptions);
         }
 
-        private string GenerateUsername(string email)
-        {
+        private string GenerateUsername(string email) {
             var username = email.Split("@")[0];
 
             username = "@" + Regex.Replace(username, @"[^a-zA-Z0-9_-]", "");
@@ -185,16 +161,9 @@ namespace MarkdownEditor.Controllers
             return username.ToLower();
         }
 
-        private async Task<User?> GetUser(Expression<Func<User, bool>> func)
-        {
+        private async Task<User?> GetUser(Expression<Func<User, bool>> func) {
             User? user = await _context.Users
                 .AsNoTracking()
-                .Include(u => u.Documents)!
-                    .ThenInclude(d => d.DocumentAccesses)
-                .Include(u => u.Documents)!
-                    .ThenInclude(d => d.DocumentVersions)
-                .Include(u => u.AccessToDocuments)!
-                    .ThenInclude(a => a.Document)
                 .FirstOrDefaultAsync(func);
 
             return user;
