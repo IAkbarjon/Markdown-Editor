@@ -79,7 +79,7 @@ function Header() {
         <div className='min-vh-100 bg-light'>
             <Navbar className='bg-white shadow-sm mb-0' expand='sm'>
                 <Container>
-                    <Navbar.Brand 
+                    <Navbar.Brand
                         className='d-flex align-items-center gap-2 fw-semibold'
                         onClick={() => navigate('/')}
                         style={{ cursor: 'pointer' }}

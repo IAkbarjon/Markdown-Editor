@@ -27,8 +27,9 @@ namespace MarkdownEditor.Controllers
                 }
 
                 var documents = await _context.Documents
-                    .Where(doc => doc.OwnerId == userId)
                     .Include(doc => doc.DocumentAccesses)
+                        .ThenInclude(acc => acc.User)
+                    .Where(doc => doc.OwnerId == userId)
                     .ToListAsync();
                 
                 return Ok(new ApiResponse<List<Document>>(documents));
@@ -67,23 +68,81 @@ namespace MarkdownEditor.Controllers
             return Unauthorized(new ApiError("Пользователь не авторизован", 401));
         }
 
-        // [HttpPatch("{id}/{title}")]
-        // public async Task<IActionResult> RenameDocument(int id, string title) {
-        //     if (string.IsNullOrEmpty(title)) {
-        //         return BadRequest(new ApiError("Получено неправильное имя для документа", 400));
-        //     }
-            
-        //     var document = await _context.Documents.FirstOrDefaultAsync(doc => doc.Id == id);
-        //     if (document == null) {
-        //         return BadRequest(new ApiError("Такого документа не существует", 400));
-        //     }
+        [HttpPatch("rename/{id}/{title}")]
+        public async Task<IActionResult> RenameDocument(int id, string title) {
+            if (string.IsNullOrEmpty(title)) {
+                return BadRequest(new ApiError("Получено неправильное имя для документа", 400));
+            }
 
-        //     document.Title = title;
-        //     await _context.SaveChangesAsync();
-        // }
+            var document = await _context.Documents.FirstOrDefaultAsync(doc => doc.Id == id);
+            if (document == null) {
+                return BadRequest(new ApiError("Такого документа не существует", 400));
+            }
+
+            document.Title = title;
+            await _context.SaveChangesAsync();
+
+            return Ok(new ApiResponse<Document>(document));
+        }
+
+        [HttpDelete("delete/{id}")]
+        public async Task<IActionResult> DeleteDocument(int id) {
+            var document = await _context.Documents.FindAsync(id);
+
+            if (document == null) {
+                return BadRequest(new ApiError("Ошибка запроса", 400, "Отсутствует параметр 'id' в запросе"));
+            }
+
+            _context.Documents.Remove(document);
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        [HttpGet("access")]
+        public async Task<IActionResult> GetAccesses() {
+            if (Request.Cookies.TryGetValue("session", out var session)) {
+                int? userId = _jwtService.GetUserIdFromToken(session);
+                if (userId == null) {
+                    return BadRequest(new ApiError("Неправильный формат токена", 400));
+                }
+
+                var user = await GetUser(u => u.Id == userId);
+
+                if (user == null) {
+                    return NotFound(new ApiError("Пользователя не существует", 404));
+                }
+
+                var accesses = await _context.DocumentAccesses
+                    .Include(acc => acc.Document)
+                        .ThenInclude(doc => doc.Owner)
+                    .Where(acc => acc.UserId == userId)
+                    .Select(acc => new {
+                        acc.Id,
+                        acc.DocumentId,
+                        acc.UserId,
+                        Document = new {
+                            acc.Document.Id,
+                            acc.Document.Title,
+                            acc.Document.LastUpdated
+                        },
+                        Owner = new {
+                            acc.Document.Owner.Username,
+                            acc.Document.Owner.FirstName,
+                            acc.Document.Owner.LastName,
+                            acc.Document.Owner.Email
+                        },
+                        acc.AccessLevel
+                    })
+                    .ToListAsync();
+
+                return Ok(new ApiResponse<object>(accesses));
+            }
+
+            return Unauthorized(new ApiError("Пользователь не авторизован", 401));
+        }
 
         [HttpPost("access")]
-        public async Task<IActionResult> GetAccess([FromBody] DocumentAccess access) {
+        public async Task<IActionResult> CreateAccess([FromBody] DocumentAccess access) {
             if (access == null) {
                 return BadRequest(new ApiError("Нет тела запроса", 400));
             }
@@ -95,9 +154,25 @@ namespace MarkdownEditor.Controllers
             await _context.DocumentAccesses.AddAsync(access);
             await _context.SaveChangesAsync();
 
-            var newAccess = _context.DocumentAccesses.First(da => da.UserId == access.UserId && da.DocumentId == access.DocumentId);
+            var newAccess = await _context.DocumentAccesses
+                .Include(acc => acc.User)
+                .FirstAsync(da => da.UserId == access.UserId && da.DocumentId == access.DocumentId);
 
             return Created(Request.Path, new ApiResponse<object>(newAccess));
+        }
+
+        [HttpDelete("access/{accessId}")]
+        public async Task<IActionResult> RemoveAccess(int accessId) {
+            var access = await _context.DocumentAccesses.FindAsync(accessId);
+
+            if (access == null) {
+                return BadRequest(new ApiError("Ошибка запроса", 400, "Не хватает параметра в запросе"));
+            }
+
+            _context.DocumentAccesses.Remove(access);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
         }
 
         private async Task<User?> GetUser(Expression<Func<User, bool>> func) {

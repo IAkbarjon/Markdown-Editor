@@ -8,7 +8,7 @@ import config from '../config/config'
  * @param {number} documentId 
  * @returns 
  */
-export const useSignalR = (documentId) => {
+export const useSignalR = (documentId, username) => {
     const [content, setContent] = useState('')
     const [isConnected, setIsConnected] = useState(false)
     const [typingUser, setTypingUser] = useState(null)
@@ -32,7 +32,7 @@ export const useSignalR = (documentId) => {
                 console.log(res)
                 connectionRef.current = connection
                 setIsConnected(true)
-                connection.invoke('JoinDocument')
+                connection.invoke('JoinDocument', documentId, username)
             })
             .catch(err => {
                 console.error(err)
@@ -51,7 +51,7 @@ export const useSignalR = (documentId) => {
         setContent(newContent)
 
         try {
-            await connectionRef.current.invoke('UpdateContent', newContent)
+            await connectionRef.current.invoke('UpdateContent', documentId, newContent)
         } catch (err) {
             console.error('Ошибка отправки:', err)
         }

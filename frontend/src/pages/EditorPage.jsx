@@ -8,6 +8,8 @@ import useUser from '../hooks/useUser'
 import { Button, Card, Badge, OverlayTrigger, Tooltip } from 'react-bootstrap'
 import { FileEarmarkText, People, PencilSquare, Clock, Eye, EyeSlash, ArrowLeft, InfoCircle, Person } from 'react-bootstrap-icons'
 import LoadingPage from './LoadingPage'
+import httpService from '../services/httpService'
+import useNotification from '../hooks/useNotification'
 
 function EditorPage() {
     const [document, setDocument] = useState(undefined)
@@ -17,35 +19,46 @@ function EditorPage() {
     const { user, isLoading } = useUser()
     const [searchParams] = useSearchParams()
     const documentId = searchParams.get('document')
-
-    const { content, updateContent, sendTyping, isConnected, typingUser } = useSignalR(documentId)
+    
+    const { content, updateContent, sendTyping, isConnected, typingUser } = useSignalR(documentId, user.username)
+    const notification = useNotification()
 
     const foundDoc = useMemo(() => {
         if (!user?.documents || !Array.isArray(user.documents) || !documentId) {
             return null
         }
-        return user.documents.find(doc => doc.id === documentId) // Используем строгое сравнение ===
+        return user.documents.find(doc => doc.id === documentId)
     }, [user?.documents, documentId])
 
     useEffect(() => {
-        console.log('iter')
-        if (isLoading || !user || !user.documents || !Array.isArray(user.documents))
-            return
+        httpService.get(`/users/check-access/${searchParams.get('document')}`)
+            .then(res => {
+                setDocument(res.data)
+            })
+            .catch(err => {
+                console.error('Ошибка проверки прав пользователя:', err)
+                notification.error('Ошибка проверки прав пользователя')
+            })
+    }, [documentId, user])
 
-        const id = searchParams.get('document')
-        if (!id) {
-            alert('Не указан ID документа')
-            return
-        }
+    // useEffect(() => {
+    //     if (isLoading || !user || !user.documents || !Array.isArray(user.documents))
+    //         return
 
-        const foundDoc = user?.documents?.find(doc => doc.id == id)
-        if (!foundDoc) {
-            alert('Такого документа нет')
-            return
-        }
+    //     const id = searchParams.get('document')
+    //     if (!id) {
+    //         alert('Не указан ID документа')
+    //         return
+    //     }
+
+    //     const foundDoc = user?.documents?.find(doc => doc.id == id)
+    //     if (!foundDoc) {
+    //         alert('Такого документа нет')
+    //         return
+    //     }
         
-        setDocument(foundDoc)
-    }, [documentId, user, isLoading])
+    //     setDocument(foundDoc)
+    // }, [documentId, user, isLoading])
 
     const handleChange = (newContent) => {
         updateContent(newContent)
@@ -118,7 +131,7 @@ function EditorPage() {
                                         bg={isConnected ? 'success' : 'secondary'}
                                         className='rounded-pill px-2 py-1'
                                     >
-                                        <small>{isConnected ? '● В реальном времени' : '○ Офлайн'}</small>
+                                        <small>{isConnected ? '● В реальном времени' : 'Офлайн'}</small>
                                     </Badge>
                                 </div>
                                 

@@ -1,4 +1,6 @@
-﻿namespace MarkdownEditor.Models
+﻿using System.Text.Json.Serialization;
+
+namespace MarkdownEditor.Models
 {
     public class DocumentVersion
     {
@@ -7,6 +9,7 @@
         public string Content { get; set; }
         public DateTime SavedAt {  get; set; }
 
+        [JsonIgnore]
         public DocumentAccess? Access { get; set; }
     }
 }

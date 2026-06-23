@@ -152,6 +152,88 @@ namespace MarkdownEditor.Controllers {
             return Ok(new ApiResponse<User>(userData));
         }
 
+        [HttpGet("check-access/{documentId}")]
+        public async Task<IActionResult> CheckDocumentAccess(int documentId)
+        {
+            try
+            {
+                // Проверяем авторизацию
+                if (!Request.Cookies.TryGetValue("session", out var session))
+                {
+                    return Unauthorized(new ApiError("Пользователь не авторизован", 401));
+                }
+
+                var userId = _jwtService.GetUserIdFromToken(session);
+                if (userId == null)
+                {
+                    return Unauthorized(new ApiError("Недействительный токен", 401));
+                }
+
+                // Проверяем существование документа
+                var document = await _context.Documents
+                    .Include(d => d.Owner)
+                    .FirstOrDefaultAsync(d => d.Id == documentId);
+
+                if (document == null)
+                {
+                    return NotFound(new ApiError("Документ не найден", 404));
+                }
+
+                // Проверяем права доступа
+                var hasAccess = false;
+                var accessLevel = 2;
+
+                // Проверяем, является ли пользователь владельцем
+                if (document.OwnerId == userId)
+                {
+                    hasAccess = true;
+                    accessLevel = 1;
+                }
+                else
+                {
+                    // Проверяем, есть ли у пользователя доступ к документу
+                    var access = await _context.DocumentAccesses
+                        .FirstOrDefaultAsync(a => a.DocumentId == documentId && a.UserId == userId);
+
+                    if (access != null)
+                    {
+                        hasAccess = true;
+                        accessLevel = access.AccessLevel;
+                    }
+                }
+
+                if (!hasAccess)
+                {
+                    // Возвращаем 403 статус без использования Forbidden()
+                    return StatusCode(403, new ApiError("У вас нет доступа к этому документу", 403));
+                }
+
+                // Возвращаем информацию о документе и правах
+                return Ok(new ApiResponse<object>(new
+                {
+                    documentId = document.Id,
+                    title = document.Title,
+                    content = document.Content ?? "",
+                    lastUpdated = document.LastUpdated,
+                    createdAt = document.CreatedAt,
+                    owner = new
+                    {
+                        document.Owner.Id,
+                        document.Owner.Username,
+                        document.Owner.FirstName,
+                        document.Owner.LastName,
+                        document.Owner.Email
+                    },
+                    accessLevel = accessLevel,
+                    isOwner = document.OwnerId == userId
+                }));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new ApiError($"Ошибка при проверке доступа: {ex.Message}", 500));
+            }
+        }
+
         private async Task<User?> GetUser(Expression<Func<User, bool>> func) {
             User? user = await _context.Users
                 .AsNoTracking()

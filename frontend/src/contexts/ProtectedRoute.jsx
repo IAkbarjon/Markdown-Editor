@@ -9,9 +9,23 @@ const UserContext = createContext()
 function ProtectedRoute({ requireAuthorization=false }) {
     const [user, setUser] = useState(null)
     const [isLoading, setIsLoading] = useState(true)
+    const [loadings, setLoadings] = useState({
+        documents: true,
+        accesses: true
+    })
 
     const navigate = useNavigate()
     const notification = useNotification()
+
+    useEffect(() => {
+        for (const load in loadings) {
+            if (loadings[load]) {
+                setIsLoading(true)
+                return
+            }
+        }
+        setIsLoading(false)
+    }, [loadings])
 
     // Генерация csrf
     const csrfGenerage = () => {
@@ -20,17 +34,32 @@ function ProtectedRoute({ requireAuthorization=false }) {
 
     const loadDocuments = () => {
         httpService.get('/document/all')
-            .then(docRes => {
+            .then(res => {
                 setUser(prev => ({
                     ...prev,
-                    documents: docRes.data ?? []
+                    documents: res.data ?? []
                 }))
             })
-            .catch(docErr => {
-                console.error('Не удалось загрузить документы:', docErr)
+            .catch(err => {
+                console.error('Не удалось загрузить документы:', err)
                 notification.error('Не удалось загрузить документы')
             })
-            .finally(() => setIsLoading(false))
+            .finally(() => setLoadings(prev => ({ ...prev, documents: false })))
+    }
+
+    const loadAccesses = () => {
+        httpService.get('/document/access')
+            .then(res => {
+                setUser(prev => ({
+                    ...prev,
+                    accessToDocuments: res.data ?? []
+                }))
+            })
+            .catch(err => {
+                console.error('Не удалось загрузить доступы к документам:', err)
+                notification.error('Не удалось запгрузить доступы к документам')
+            })
+            .finally(() => setLoadings(prev => ({ ...prev, accesses: false })))
     }
 
     // Проверка авторизаций
@@ -42,6 +71,11 @@ function ProtectedRoute({ requireAuthorization=false }) {
                     documents: userRes.data.documents ?? []
                 })
                 loadDocuments()
+                loadAccesses()
+            })
+            .catch(() => {
+                navigate('/auth', { replace: true })
+                setIsLoading(false)
             })
     }
 
@@ -67,6 +101,7 @@ function ProtectedRoute({ requireAuthorization=false }) {
                 setUser(res.data)
                 csrfGenerage()
                 loadDocuments()
+                loadAccesses()
             })
             .catch(err => {
                 notification.error(err.message || 'Ошибка запроса')

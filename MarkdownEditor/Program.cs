@@ -77,45 +77,28 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 // CSRF Token endpoint
-app.MapGet("/api/csrf-token", async (IAntiforgery antiforgery, HttpContext context) => {
-    if (context.Request.Cookies.ContainsKey("XSRF-TOKEN")) {
-        context.Response.Cookies.Delete("XSRF-TOKEN", new CookieOptions {
-            SameSite = SameSiteMode.None,
-            Secure = true,
-            Path  = "/"
-        });
-    }
-    
+app.MapGet("/api/csrf-token", async (IAntiforgery antiforgery, HttpContext context) =>
+{
     var tokens = antiforgery.GetAndStoreTokens(context);
-
-    if (tokens == null) {
-        Console.WriteLine("ERROR: tokens is null");
-        return Results.Problem("Failed to generate CSRF tokens");
-    }
-
-    if (string.IsNullOrEmpty(tokens.CookieToken)) {
-        Console.WriteLine("ERROR: CookieTokens is null or empty");
-        return Results.Problem("Failed to generate CookieToken");
-    }
-
-    if (string.IsNullOrEmpty(tokens.RequestToken)) {
-        Console.WriteLine("ERROR: RequestToken is null or empty");
-        return Results.Problem("Failed to generate RequestToken");
-    }
-
-    context.Response.Cookies.Append("XSRF-TOKEN", tokens.CookieToken!, new CookieOptions {
-        HttpOnly = false,
-        SameSite = SameSiteMode.None,
-        Secure = true,
-        Expires = DateTimeOffset.UtcNow.AddDays(2),
-        Path = "/"
-    });
-
     return Results.Ok(new { token = tokens.RequestToken });
 }).AllowAnonymous();
 
 app.UseHttpsRedirection();
 app.MapControllers();
 app.MapHub<MarkdownHub>("/api/markdownHub");
+
+using (var scope = app.Services.CreateScope()) {
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<ApplicationContext>();
+        context.Database.Migrate();
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Ошибка при применении миграций базы данных.");
+    }
+}
 
 app.Run();

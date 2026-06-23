@@ -8,10 +8,12 @@ namespace MarkdownEditor.Models
         public int UserId { get; set; }
         public int DocumentId { get; set; }
         public int AccessLevel { get; set; }
+
         
         public User? User { get; set; }
         [JsonIgnore]
         public Document? Document { get; set; }
+        [JsonIgnore]
         public ICollection<DocumentVersion>? SavedVersions { get; set; }
     }
 }

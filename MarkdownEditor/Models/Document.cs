@@ -14,9 +14,9 @@ namespace MarkdownEditor.Models
         [JsonIgnore]
         public User? Owner { get; set; }
         public int OwnerId { get; set; }
-
-
+        
         public ICollection<DocumentAccess>? DocumentAccesses { get; set; }
+        
         public ICollection<DocumentVersion>? DocumentVersions { get; set; }
     }
 }

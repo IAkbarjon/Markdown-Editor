@@ -1,5 +1,6 @@
 ﻿using MarkdownEditor.Models;
 using MarkdownEditor.Services;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,8 +14,9 @@ namespace MarkdownEditor.Controllers {
     [Route("api/authorization")]
     [ApiController]
     public class AuthorizationController : ControllerBase {
-        private readonly ApplicationContext _context;
+        private readonly IAntiforgery _antiforgery;
         private readonly IJwtService _jwtService;
+        private readonly ApplicationContext _context;
         private readonly CookieOptions _cookieOptions = new CookieOptions {
             HttpOnly = true,
             Secure = true,
@@ -23,9 +25,10 @@ namespace MarkdownEditor.Controllers {
             Path = "/"
         };
 
-        public AuthorizationController(ApplicationContext context, IJwtService jwtService) {
-            _context = context;
+        public AuthorizationController(IAntiforgery antiforgery, IJwtService jwtService, ApplicationContext context) {
+            _antiforgery = antiforgery;
             _jwtService = jwtService;
+            _context = context;
         }
 
         [HttpGet("check")]
@@ -150,7 +153,13 @@ namespace MarkdownEditor.Controllers {
         }
 
         private void SetSession(int userId) {
-            Response.Cookies.Append("session", _jwtService.GenerateToken(userId), _cookieOptions);
+            // Установка сессии
+            string sessionToken = _jwtService.GenerateToken(userId);
+            Response.Cookies.Append("session", sessionToken, _cookieOptions);
+
+            // Генерация нового XSRF-токена
+            var tokens = _antiforgery.GetAndStoreTokens(HttpContext);
+            Response.Headers.Append("X-XSRF-TOKEN-INIT", tokens.RequestToken);
         }
 
         private string GenerateUsername(string email) {
